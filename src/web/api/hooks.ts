@@ -160,6 +160,9 @@ export const useMarkSold = () =>
     (qc, a) => refreshListing(qc, a.id),
   );
 
+export const useUnmarkSold = () =>
+  useApiMutation((id: string) => api.post<ListingDetail>(`/api/listings/${id}/unmark-sold`), (qc, id) => refreshListing(qc, id));
+
 export const useDismissSale = () =>
   useApiMutation((id: string) => api.post<ListingDetail>(`/api/listings/${id}/dismiss-sale`), (qc, id) => refreshListing(qc, id));
 

@@ -18,6 +18,7 @@ import { listingsRoutes } from './routes/listings';
 import { logsRoutes } from './routes/logs';
 import { marketplacesRoutes } from './routes/marketplaces';
 import { photosRoutes } from './routes/photos';
+import { salesRoutes } from './routes/sales';
 import { settingsRoutes } from './routes/settings';
 
 declare module 'fastify' {
@@ -79,6 +80,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     await api.register(photosRoutes);
     await api.register(marketplacesRoutes);
     await api.register(jobsRoutes);
+    await api.register(salesRoutes);
   }, { prefix: '/api' });
 
   if (config.isProd) {

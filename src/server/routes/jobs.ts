@@ -98,6 +98,16 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
     return { job: createJob(app.db, { type: 'deactivate', marketplaceId: mp, listingId: id, input: { previousStatus: target.status } }) };
   });
 
+  app.post('/listings/:id/marketplaces/:mp/update', async (req) => {
+    const { id, mp } = targetParams.parse(req.params);
+    const target = requireTarget(app.db, id, mp);
+    if (target.status !== 'active') throw new AppError('NOT_ACTIVE', 409, 'That listing is not active on this marketplace.');
+    if (getAdapter(mp).capabilities.update === 'none' || !getAdapter(mp).update) {
+      throw new AppError('UPDATE_UNSUPPORTED', 409, 'This marketplace does not support pushing edits. Change the listing there directly.');
+    }
+    return { job: createJob(app.db, { type: 'update', marketplaceId: mp, listingId: id, input: { previousStatus: target.status } }) };
+  });
+
   app.post('/marketplaces/:mp/connect', async (req) => {
     const { mp } = z.object({ mp: marketplaceIdSchema }).parse(req.params);
     getAdapter(mp);
