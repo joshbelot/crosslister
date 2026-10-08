@@ -26,11 +26,18 @@ export function toLocator(scope: Page | Locator, c: LocatorCandidate): Locator {
 export async function resolveLocator(
   scope: Page | Locator, spec: LocatorSpec, opts: { timeoutMs?: number; state?: 'visible' | 'attached' } = {},
 ): Promise<Locator> {
+  const state = opts.state ?? 'visible';
   const loc = combinedLocator(scope, spec).first();
   try {
-    await loc.waitFor({ state: opts.state ?? 'visible', timeout: opts.timeoutMs ?? 6000 });
+    await loc.waitFor({ state, timeout: opts.timeoutMs ?? 6000 });
   } catch {
     throw adapterError('ELEMENT_NOT_FOUND', null, { what: spec.what });
+  }
+  // `.or()` yields DOM order; honor the candidate order (earlier = preferred) among the ones that are present.
+  for (const c of spec.candidates) {
+    const base = toLocator(scope, c);
+    const one = state === 'visible' ? base.filter({ visible: true }).first() : base.first();
+    if ((await one.count().catch(() => 0)) > 0) return one;
   }
   return loc;
 }

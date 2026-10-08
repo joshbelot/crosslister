@@ -8,6 +8,7 @@ import { MAX_UPLOAD_BYTES } from '../shared/constants';
 import type { Db } from './db/client';
 import { config } from './config';
 import { AppError } from './errors';
+import { setAdapterDb } from './marketplaces/common';
 import { initBrowserManager } from './browser/browserManager';
 import { jobRunner } from './services/jobRunner';
 import { logger } from './services/logger';
@@ -96,6 +97,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   }
 
   initBrowserManager(deps.db);
+  setAdapterDb(deps.db);
   if (deps.startJobRunner !== false) {
     jobRunner.start(deps.db);
     app.addHook('onClose', async () => { await jobRunner.stop(); });

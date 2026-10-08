@@ -3,13 +3,14 @@ import { MARKETPLACE_ORDER } from '../../shared/constants';
 import { AppError } from '../errors';
 import { setNoAutoSubmitProvider } from '../services/settings';
 import { manualAdapter } from './manual';
+import { mercariAdapter } from './mercari';
 import type { MarketplaceAdapter } from './types';
 
 // Until a marketplace's own milestone lands, it is registered as a manual adapter (Phase 1 supports every marketplace manually).
 // The registry's array is the one permitted `any`: adapters have different TData.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let adapters: MarketplaceAdapter<any>[] = [
-  manualAdapter('mercari', 'Mercari', { home: 'https://www.mercari.com/', sell: 'https://www.mercari.com/sell/' }),
+  mercariAdapter,
   manualAdapter('poshmark', 'Poshmark', { home: 'https://poshmark.com/', sell: 'https://poshmark.com/create-listing' }),
   manualAdapter('depop', 'Depop', { home: 'https://www.depop.com/', sell: 'https://www.depop.com/products/create/' }),
   manualAdapter('facebook', 'Facebook Marketplace', { home: 'https://www.facebook.com/marketplace/', sell: 'https://www.facebook.com/marketplace/create/item' }),

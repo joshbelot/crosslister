@@ -27,6 +27,14 @@ Publishing runs as a **job** made of **steps**:
 
 Limits and known issues are added here as each adapter is built.
 
+### Mercari (assisted, uncalibrated)
+
+- **Automated:** photo upload (max 12), title (80 chars), description (1,000 chars), category path, brand, condition, size, one color, package weight and who pays shipping, price (turns Smart Pricing off).
+- **You do:** log in, review, click **List** (or enable "Click the final Publish button for me" in Settings → Marketplaces).
+- **Deactivate:** opens the listing's edit page and clicks Deactivate; if it can't, it asks you to remove the listing and click "It's removed".
+- **Known limits:** Mercari has no "Multicolor" option (color is left empty); "New without tags" is sent as "Like new"; only one color is chosen.
+- **Calibration:** not yet calibrated against the live site. Selectors: `src/server/marketplaces/mercari/selectors.ts`.
+
 ## Calibration
 
 The selectors, labels and category trees in the adapters are best-effort knowledge of the live sites and were **not verified against them**. The tests use local HTML fixtures, which verify the app's flow logic and helpers — **not** accuracy against the real sites.

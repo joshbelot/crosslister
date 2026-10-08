@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Mercari — Edit (fixture)</title>
+<script src="/_shared/fixture.js"></script>
+<script>Fixture.requireLogin('/mercari/login.html');</script></head>
+<body>
+  <nav><a href="/mercari/sell.html">My page</a></nav>
+  <h1>Edit listing</h1>
+  <div id="status"></div>
+  <button id="deactivate" type="button" data-fixture-id="deactivate">Deactivate</button>
+  <div id="dialog" role="dialog" aria-label="Deactivate listing" hidden>
+    <p>Deactivate this listing?</p>
+    <button id="confirm" type="button">Deactivate</button><button type="button" onclick="document.getElementById('dialog').hidden = true">Cancel</button>
+  </div>
+<script>
+  Fixture.applyMissing();
+  const d = document.getElementById('deactivate');
+  if (d) d.addEventListener('click', () => { document.getElementById('dialog').hidden = false; });
+  document.getElementById('confirm').addEventListener('click', () => {
+    localStorage.setItem('cl-deactivated', '1');
+    document.getElementById('dialog').hidden = true;
+    if (d) d.remove();
+    document.getElementById('status').textContent = 'This listing has been deactivated.';
+  });
+</script>
+</body></html>

@@ -13,7 +13,7 @@ beforeAll(async () => {
   t = await createTestApp();
   const a = await seedListing(t.app, { title: 'Jeans, "vintage"\nsecond line', tags: ['a', 'b'], colors: ['blue', 'black'] });
   await uploadPhotos(t.app, a.id, [{ name: 'b.jpg', buffer: await makeJpeg(300, 200, '#990000'), type: 'image/jpeg' }]);
-  await req(t.app, 'POST', `/api/listings/${a.id}/marketplaces/mercari/mark-listed`, { url: 'https://www.mercari.com/us/item/m1/' });
+  await req(t.app, 'POST', `/api/listings/${a.id}/marketplaces/mercari/mark-listed`, { url: 'https://www.mercari.com/us/item/m1234567/' });
   await seedListing(t.app, { title: 'Second item' });
   first = a;
 });
@@ -31,7 +31,7 @@ describe('json export', () => {
     const l = body.listings.find((x: { id: string }) => x.id === first.id);
     expect(l.photos).toHaveLength(2);
     expect(l.photos[0].file).toMatch(new RegExp(`^listings/${first.id}/original/[a-z0-9]+\\.jpg$`));
-    expect(l.marketplaces).toEqual([expect.objectContaining({ marketplaceId: 'mercari', status: 'active', remoteId: 'm1' })]);
+    expect(l.marketplaces).toEqual([expect.objectContaining({ marketplaceId: 'mercari', status: 'active', remoteId: 'm1234567' })]);
     expect(l.notes).toBeDefined();
     expect(JSON.stringify(body)).not.toContain('"jobs"');
   });
@@ -53,7 +53,7 @@ describe('csv export', () => {
     expect(text).toContain('"Jeans, ""vintage""\nsecond line"');
     expect(text).toContain('65.00');
     expect(text).toContain('blue;black');
-    expect(text).toContain('active,m1,https://www.mercari.com/us/item/m1/');
+    expect(text).toContain('active,m1234567,https://www.mercari.com/us/item/m1234567/');
     expect(text).toContain('Men › Bottoms › Jeans');
   });
   it('toCsvRow quotes only when needed', () => {

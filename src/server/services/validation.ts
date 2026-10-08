@@ -8,6 +8,7 @@ import type {
 import type { Db } from '../db/client';
 import { listings, marketplaceListings, photos } from '../db/schema';
 import { notFound } from '../errors';
+import { categoryPathFor } from '../marketplaces/common';
 import { getAdapter } from '../marketplaces/registry';
 import type { EffectiveListing, MarketplaceAdapter } from '../marketplaces/types';
 import { buildEffectiveListing } from './effectiveListing';
@@ -65,6 +66,9 @@ export function validateForMarketplace(
   }
   if (totalPhotoCount > cap.maxPhotos) add('photos', 'warning', `Only the first ${cap.maxPhotos} photos will be uploaded to ${N}.`);
   for (const e of eff.dataErrors) add('data', 'error', `${N} settings: ${e}`);
+  if (adapter.kind === 'browser' && adapter.categoryPath && eff.categoryId && !categoryPathFor(adapter, eff)) {
+    add('categoryId', 'warning', `Category isn't mapped for ${N} — you'll choose it in the browser.`);
+  }
 
   return [...issues, ...adapter.validate(eff)];
 }

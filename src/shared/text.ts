@@ -30,3 +30,11 @@ export function jaccard(a: Set<string>, b: Set<string>): number {
   const union = a.size + b.size - inter;
   return union === 0 ? 0 : inter / union;
 }
+
+/** 20 oz → "1 lb 4 oz" */
+export function formatWeight(oz: number | null | undefined): string {
+  if (oz === null || oz === undefined) return '';
+  const lb = Math.floor(oz / 16);
+  const rest = Math.round((oz - lb * 16) * 10) / 10;
+  return [lb ? `${lb} lb` : '', rest || !lb ? `${rest} oz` : ''].filter(Boolean).join(' ');
+}

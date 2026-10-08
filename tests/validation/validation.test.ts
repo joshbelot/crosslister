@@ -40,22 +40,23 @@ describe('canonical rules', () => {
 describe('marketplace rules', () => {
   it('reports per-marketplace readiness with previews', async () => {
     const l = await seedListing(t.app, { title: 'x'.repeat(10) + ' ' + 'word '.repeat(30) });
-    const rep = (await req(t.app, 'GET', `/api/listings/${l.id}/validation?marketplaceIds=vinted,mercari`)).json();
-    expect(rep.marketplaces.map((m: { marketplaceId: string }) => m.marketplaceId)).toEqual(['mercari', 'vinted']);
-    const issues = issuesFor(rep, 'mercari');
+    const rep = (await req(t.app, 'GET', `/api/listings/${l.id}/validation?marketplaceIds=vinted,offerup`)).json();
+    expect(rep.marketplaces.map((m: { marketplaceId: string }) => m.marketplaceId)).toEqual(['vinted', 'offerup']);
+    const issues = issuesFor(rep, 'vinted');
     const trunc = issues.find((i) => i.field === 'title');
     expect(trunc?.severity).toBe('warning');
-    expect(trunc?.message).toMatch(/^Title will be shortened to 100 characters on Mercari: "/);
+    expect(trunc?.message).toMatch(/^Title will be shortened to 100 characters on Vinted: "/);
     expect(rep.marketplaces[0].preview.title.length).toBeLessThanOrEqual(100);
+    expect(rep.marketplaces[0].preview.photoCount).toBe(1);
     expect(rep.marketplaces[0].ready).toBe(true);
     expect(rep.marketplaces[0].preview.photoCount).toBe(1);
   });
   it('checks description length, price limits, and requirements', async () => {
     const l = await seedListing(t.app, { description: 'd'.repeat(2500) });
-    const rep = (await req(t.app, 'GET', `/api/listings/${l.id}/validation?marketplaceIds=vinted,mercari`)).json();
+    const rep = (await req(t.app, 'GET', `/api/listings/${l.id}/validation?marketplaceIds=vinted,offerup`)).json();
     expect(issuesFor(rep, 'vinted').find((i) => i.field === 'description')?.message)
       .toMatch(/^Description is \d+ characters; Vinted allows 2000\. Shorten it or write a Vinted-specific description\.$/);
-    expect(issuesFor(rep, 'mercari').some((i) => i.field === 'description')).toBe(false);
+    expect(issuesFor(rep, 'offerup').some((i) => i.field === 'description')).toBe(false);
   });
   it('unit rules: min/max price, requires, photo count, data errors', () => {
     const adapter = manualAdapter('other', 'Other', { home: 'about:blank', sell: 'about:blank' }, {
@@ -91,27 +92,27 @@ describe('marketplace rules', () => {
 describe('effective listing', () => {
   it('applies price adjust, overrides, description composition and keeps private fields out', async () => {
     const s = (await req(t.app, 'GET', '/api/settings')).json();
-    s.marketplaces.mercari.priceAdjustPercent = 10;
+    s.marketplaces.offerup.priceAdjustPercent = 10;
     s.descriptionFooter = 'Ships fast!';
     await req(t.app, 'PUT', '/api/settings', s);
     const l = await seedListing(t.app, {
       description: 'Nice jeans with a small stain.', conditionNotes: 'Small stain', notes: 'bought at flea market', costCents: 100,
       measurements: { chestIn: 22, lengthIn: 28.5 },
     });
-    await req(t.app, 'PUT', `/api/listings/${l.id}/marketplaces`, { marketplaceIds: ['mercari', 'poshmark'] });
-    const p = (await req(t.app, 'GET', `/api/listings/${l.id}/marketplaces/mercari/preview`)).json();
+    await req(t.app, 'PUT', `/api/listings/${l.id}/marketplaces`, { marketplaceIds: ['offerup', 'vinted'] });
+    const p = (await req(t.app, 'GET', `/api/listings/${l.id}/marketplaces/offerup/preview`)).json();
     expect(p.priceCents).toBe(7200);
     expect(p.description).toBe('Nice jeans with a small stain.\n\nMeasurements: Chest 22" · Length 28.5"\n\nShips fast!');
     expect(p.description).not.toContain('flea');
     expect(p.mapping).toEqual([{ label: 'Condition', value: 'Good' }, { label: 'Category', value: 'Men › Bottoms › Jeans' }]);
 
     await req(t.app, 'PATCH', `/api/listings/${l.id}`, { conditionNotes: 'Faded knees' });
-    await req(t.app, 'PATCH', `/api/listings/${l.id}/marketplaces/mercari`, { titleOverride: 'Custom title', priceOverrideCents: 5000, descriptionOverride: 'Override desc' });
-    const p2 = (await req(t.app, 'GET', `/api/listings/${l.id}/marketplaces/mercari/preview`)).json();
+    await req(t.app, 'PATCH', `/api/listings/${l.id}/marketplaces/offerup`, { titleOverride: 'Custom title', priceOverrideCents: 5000, descriptionOverride: 'Override desc' });
+    const p2 = (await req(t.app, 'GET', `/api/listings/${l.id}/marketplaces/offerup/preview`)).json();
     expect(p2.title).toBe('Custom title');
     expect(p2.priceCents).toBe(5000);
     expect(p2.description).toBe('Override desc\n\nMeasurements: Chest 22" · Length 28.5"\n\nFlaws/notes: Faded knees\n\nShips fast!');
-    const p3 = (await req(t.app, 'GET', `/api/listings/${l.id}/marketplaces/poshmark/preview`)).json();
+    const p3 = (await req(t.app, 'GET', `/api/listings/${l.id}/marketplaces/vinted/preview`)).json();
     expect(p3.priceCents).toBe(6500);
     expect(measurementsLine({})).toBe('');
   });
@@ -145,14 +146,18 @@ describe('targets', () => {
     expect(list[0].prefs.dailyLimit).toBe(25);
     const put = await req(t.app, 'PUT', '/api/settings/category-map/mercari', { map: { 'men.tops': 'Men > Tops', 'x': '  ' } });
     expect(put.json().map).toEqual({ 'men.tops': 'Men > Tops' });
-    expect((await req(t.app, 'GET', '/api/settings/category-map/mercari')).json()).toEqual({ map: { 'men.tops': 'Men > Tops' }, builtIn: {} });
+    const cm = (await req(t.app, 'GET', '/api/settings/category-map/mercari')).json();
+    expect(cm.map).toEqual({ 'men.tops': 'Men > Tops' });
+    expect(cm.builtIn['men.shoes.sneakers']).toBe('Men > Shoes > Sneakers');
+    expect(cm.builtIn['men.bottoms.jeans']).toBe('Men > Jeans');
+    expect((await req(t.app, 'GET', '/api/settings/category-map/vinted')).json().builtIn).toEqual({});
   });
   it('marks listed (parsing URLs) and ended', async () => {
     const l = await seedListing(t.app);
-    const ml = (await req(t.app, 'POST', `/api/listings/${l.id}/marketplaces/mercari/mark-listed`, { url: 'https://www.mercari.com/us/item/m123/' })).json();
+    const ml = (await req(t.app, 'POST', `/api/listings/${l.id}/marketplaces/mercari/mark-listed`, { url: 'https://www.mercari.com/us/item/m1234567/' })).json();
     expect(ml.status).toBe('active');
     expect(ml.verified).toBe(true);
-    expect(ml.remoteId).toBe('m123');
+    expect(ml.remoteId).toBe('m1234567');
     const bare = (await req(t.app, 'POST', `/api/listings/${l.id}/marketplaces/poshmark/mark-listed`, {})).json();
     expect(bare.status).toBe('active');
     expect(bare.verified).toBe(false);

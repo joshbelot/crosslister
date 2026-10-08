@@ -157,12 +157,21 @@ export function buildCategoryPath(
 
 const parsePathString = (s: string): CategoryPath => s.split('>').map((x) => x.trim()).filter(Boolean);
 
+let adapterDb: Db | null = null;
+/** Lets synchronous adapter hooks (describeMapping, validate) read the user's category map. Set once by buildApp. */
+export function setAdapterDb(db: Db | null): void { adapterDb = db; }
+
+/** Category path for previews/validation, using the app's database when available. */
+export function categoryPathFor<T>(adapter: MarketplaceAdapter<T>, eff: EffectiveListing<T>): CategoryPath | null {
+  return resolveCategoryPath(adapterDb, adapter, eff, eff.data as Record<string, unknown>);
+}
+
 /** Per-listing override → user category map → adapter built-in → null (05 §1.1). */
-export function resolveCategoryPath<T>(db: Db, adapter: MarketplaceAdapter<T>, eff: EffectiveListing<T>, mlData: Record<string, unknown>): CategoryPath | null {
+export function resolveCategoryPath<T>(db: Db | null, adapter: MarketplaceAdapter<T>, eff: EffectiveListing<T>, mlData: Record<string, unknown>): CategoryPath | null {
   const own = typeof mlData.categoryPath === 'string' ? parsePathString(mlData.categoryPath) : [];
   if (own.length) return own;
   if (!eff.categoryId) return null;
-  const map = getKv<Record<string, string>>(db, `category_map_${adapter.id}`, {});
+  const map = db ? getKv<Record<string, string>>(db, `category_map_${adapter.id}`, {}) : {};
   const mapped = lookupByCategory(map, eff.categoryId);
   if (mapped) {
     const p = parsePathString(mapped);
@@ -188,6 +197,15 @@ const sleepAbortable = (ms: number, signal: AbortSignal) => new Promise<void>((r
   const onAbort = () => { clearTimeout(t); reject(adapterError('CANCELLED', null)); };
   signal.addEventListener('abort', onAbort, { once: true });
 });
+
+/** Poll `check` until it returns true (or the signal aborts). */
+export async function pollUntil(signal: AbortSignal, check: () => Promise<boolean>, everyMs = 1500): Promise<void> {
+  for (;;) {
+    if (signal.aborted) throw adapterError('CANCELLED', null);
+    try { if (await check()) return; } catch (err) { if (/closed/i.test(String((err as Error).message))) throw err; }
+    await sleepAbortable(everyMs, signal);
+  }
+}
 
 /**
  * Resolves when the page URL path matches `pathRegex`, or when `successText` is visible and a link on the page matches it.

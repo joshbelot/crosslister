@@ -3,11 +3,13 @@ import { fakeAdapter, waitFor } from '../helpers/fakeAdapter';
 import { seedListing } from '../helpers/fixtures';
 import { createTestApp, req, type TestApp } from '../helpers/testApp';
 import { __setAdaptersForTest, allAdapters } from '../../src/server/marketplaces/registry';
+import { manualAdapter } from '../../src/server/marketplaces/manual';
 import { jobRunner } from '../../src/server/services/jobRunner';
 
 let t: TestApp;
-const real = allAdapters();
-beforeAll(async () => { t = await createTestApp(); });
+// Browser adapters would open a real browser; this suite exercises the manual flow for every marketplace.
+const real = allAdapters().map((a) => (a.kind === 'browser' ? manualAdapter(a.id, a.name, a.urls) : a));
+beforeAll(async () => { t = await createTestApp(); __setAdaptersForTest(real); });
 afterAll(async () => { __setAdaptersForTest(null); await t.cleanup(); });
 afterEach(async () => {
   await jobRunner.idle();
