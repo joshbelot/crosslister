@@ -68,6 +68,8 @@ export interface MarketplaceAdapter<TData = Record<string, unknown>> {
   listingUrl(remoteId: string): string;
 
   connect(ctx: JobContext): Promise<ConnectionResult>;
+  /** Optional: extra cleanup when the user disconnects (e.g. eBay deletes its stored tokens). */
+  disconnect?(db: Db): Promise<void>;
   publish(ctx: JobContext, listing: EffectiveListing<TData>): Promise<PublishResult>;
   update?(ctx: JobContext, listing: EffectiveListing<TData>, ml: MarketplaceListing): Promise<void>;
   deactivate(ctx: JobContext, ml: MarketplaceListing): Promise<void>;

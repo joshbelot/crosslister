@@ -10,6 +10,7 @@ import { allAdapters } from '../marketplaces/registry';
 import {
   markEnded, markListed, openPhotos, patchTarget, previewTarget, removeTarget, setTargets,
 } from '../services/marketplaceListings';
+import { disconnectMarketplace } from '../services/connections';
 import { getSettings } from '../services/settings';
 import { buildValidationReport } from '../services/validation';
 
@@ -35,6 +36,12 @@ export function marketplaceInfos(app: FastifyInstance): MarketplaceInfo[] {
 
 export async function marketplacesRoutes(app: FastifyInstance): Promise<void> {
   app.get('/marketplaces', async () => marketplaceInfos(app));
+
+  app.post('/marketplaces/:mp/disconnect', async (req) => {
+    const { mp } = z.object({ mp: marketplaceIdSchema }).parse(req.params);
+    await disconnectMarketplace(app.db, mp);
+    return marketplaceInfos(app).find((m) => m.id === mp)!;
+  });
 
   app.put('/listings/:id/marketplaces', async (req) => {
     const { id } = listingParams.parse(req.params);

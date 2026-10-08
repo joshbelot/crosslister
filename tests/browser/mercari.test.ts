@@ -131,4 +131,23 @@ describe.skipIf(!process.env.RUN_BROWSER_TESTS)('mercari adapter (fixtures — a
     await run;
     expect((await job(dj2.id)).state).toBe('SUCCESS');
   }, 120_000);
+
+  it('connect: asks for login, reports Connected; disconnect deletes the profile', async () => {
+    const { profileDir } = await import('../../src/server/paths');
+    const fs = await import('node:fs');
+    const { job: cj } = (await req(t.app, 'POST', '/api/marketplaces/mercari/connect')).json();
+    const run = runner.runOnce(t.db);
+    const waiting = await waitFor(async () => { const j = await job(cj.id); return j.state === 'NEEDS_USER' ? j : null; }, 60_000);
+    expect(waiting.needsUser.reason).toBe('login');
+    const { browserManager } = await import('../../src/server/browser/browserManager');
+    await (await browserManager.getPage('mercari')).getByRole('button', { name: 'Log in' }).click();
+    await run;
+    expect((await job(cj.id)).state).toBe('SUCCESS');
+    let info = (await req(t.app, 'GET', '/api/marketplaces')).json().find((m: { id: string }) => m.id === 'mercari');
+    expect(info.connection.status).toBe('connected');
+    expect(fs.existsSync(profileDir('mercari'))).toBe(true);
+    info = (await req(t.app, 'POST', '/api/marketplaces/mercari/disconnect')).json();
+    expect(info.connection.status).toBe('logged_out');
+    expect(fs.existsSync(profileDir('mercari'))).toBe(false);
+  }, 120_000);
 });
