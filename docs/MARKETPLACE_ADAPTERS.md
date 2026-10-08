@@ -43,6 +43,15 @@ Limits and known issues are added here as each adapter is built.
 - **Known limits:** whole-dollar prices only (cents are rounded, with a warning); needs MSRP and size; no categories for Collectibles & Other; no "Multicolor".
 - **Calibration:** not yet calibrated against the live site. Selectors: `src/server/marketplaces/poshmark/selectors.ts`.
 
+### Depop (assisted, uncalibrated)
+
+- **Automated:** photos (max 8), description, category (menu path, or typing the leaf if the control is a search box), brand, condition, size, up to 2 colors, price, parcel size from the package weight.
+- **How the title works:** Depop has no title field, so the app writes the title as the first line of the description, then your description, then hashtags (your tags, or the Hashtags field under Customize per marketplace).
+- **You do:** log in, review, click **Post**.
+- **Deactivate:** opens the product's edit page and deletes it (Depop has no "deactivate"); if the button isn't found, you're asked to remove it yourself.
+- **Known limits:** the 1,000-character description limit includes the title and hashtags; parcel-size tiers are estimates; Depop's partner API (if granted) would be a better long-term route.
+- **Calibration:** not yet calibrated against the live site. Selectors: `src/server/marketplaces/depop/selectors.ts`.
+
 ## Calibration
 
 The selectors, labels and category trees in the adapters are best-effort knowledge of the live sites and were **not verified against them**. The tests use local HTML fixtures, which verify the app's flow logic and helpers — **not** accuracy against the real sites.

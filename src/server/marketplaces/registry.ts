@@ -3,6 +3,7 @@ import { MARKETPLACE_ORDER } from '../../shared/constants';
 import { AppError } from '../errors';
 import { setNoAutoSubmitProvider } from '../services/settings';
 import { manualAdapter } from './manual';
+import { depopAdapter } from './depop';
 import { mercariAdapter } from './mercari';
 import { poshmarkAdapter } from './poshmark';
 import type { MarketplaceAdapter } from './types';
@@ -13,7 +14,7 @@ import type { MarketplaceAdapter } from './types';
 let adapters: MarketplaceAdapter<any>[] = [
   mercariAdapter,
   poshmarkAdapter,
-  manualAdapter('depop', 'Depop', { home: 'https://www.depop.com/', sell: 'https://www.depop.com/products/create/' }),
+  depopAdapter,
   manualAdapter('facebook', 'Facebook Marketplace', { home: 'https://www.facebook.com/marketplace/', sell: 'https://www.facebook.com/marketplace/create/item' }),
   manualAdapter('ebay', 'eBay', { home: 'https://www.ebay.com/', sell: 'https://www.ebay.com/sl/sell' }),
   manualAdapter('grailed', 'Grailed', { home: 'https://www.grailed.com/', sell: 'https://www.grailed.com/sell' }),

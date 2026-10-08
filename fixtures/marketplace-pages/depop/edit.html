@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Depop — Edit product (fixture)</title>
+<script src="/_shared/fixture.js"></script><script>Fixture.requireLogin('/depop/login.html');</script></head>
+<body>
+  <nav><a href="/depop/sell.html">Profile</a></nav>
+  <h1>Edit product</h1>
+  <button id="delete" type="button" data-fixture-id="delete">Delete listing</button>
+  <div id="dialog" role="dialog" aria-label="Delete this listing?" hidden><p>Delete this listing?</p>
+    <button id="confirm" type="button">Delete</button><button type="button" onclick="document.getElementById('dialog').hidden = true">Cancel</button></div>
+<script>
+  Fixture.applyMissing();
+  const d = document.getElementById('delete');
+  if (d) d.addEventListener('click', () => { document.getElementById('dialog').hidden = false; });
+  document.getElementById('confirm').addEventListener('click', () => { localStorage.setItem('cl-deleted', '1'); location.href = '/depop/sell.html'; });
+</script>
+</body></html>

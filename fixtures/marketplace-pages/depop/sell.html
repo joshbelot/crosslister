@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Depop — Sell (fixture)</title>
+<script src="/_shared/fixture.js"></script>
+<style>body{font-family:sans-serif;padding:12px} .row{margin:8px 0} ul[role=listbox],ul[role=menu]{border:1px solid #999;list-style:none;padding:4px;background:#fff} [hidden]{display:none!important} li{cursor:pointer;padding:2px 6px}</style>
+<script>Fixture.requireLogin('/depop/login.html');</script></head>
+<body>
+  <nav><a href="/depop/sell.html">Profile</a></nav>
+  <h1>Sell an item</h1>
+  <div class="row" data-fixture-id="photos"><input type="file" id="photos" multiple accept="image/*" style="display:none" /><div id="previews"></div></div>
+  <div class="row" data-fixture-id="description"><label for="desc">Description</label><textarea id="desc" name="description"></textarea></div>
+  <div class="row" data-fixture-id="category"><label for="cat">Category</label><button id="cat" type="button">Select category</button><ul id="cat-menu" role="menu" hidden></ul></div>
+  <div class="row" data-fixture-id="brand"><label for="brand">Brand</label><input id="brand" autocomplete="off" /><ul id="brand-list"></ul></div>
+  <div class="row" data-fixture-id="condition"><label for="cond">Condition</label>
+    <select id="cond"><option value="">Select</option><option>Brand new</option><option>Like new</option><option>Used - Excellent</option><option>Used - Good</option><option>Used - Fair</option></select></div>
+  <div class="row" data-fixture-id="size"><label for="size">Size</label>
+    <select id="size"><option value="">Select</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>US 28</option><option>US 30</option><option>US 32</option><option>US 34</option><option>US 10</option><option>US 10.5</option></select></div>
+  <div class="row" data-fixture-id="colors"><label for="colour">Colour</label><button id="colour" type="button">Select colours</button><ul id="colour-list" role="listbox" hidden>
+    <li role="option">Black</li><li role="option">White</li><li role="option">Blue</li><li role="option">Red</li><li role="option">Cream</li><li role="option">Multi</li></ul></div>
+  <div class="row" data-fixture-id="price"><label for="price">Price</label><input id="price" name="priceAmount" /></div>
+  <div class="row" data-fixture-id="parcel"><div role="radiogroup" aria-label="Parcel size" id="parcel">
+    <button type="button" role="radio" aria-checked="false">Extra small</button><button type="button" role="radio" aria-checked="false">Small</button>
+    <button type="button" role="radio" aria-checked="false">Medium</button><button type="button" role="radio" aria-checked="false">Large</button>
+    <button type="button" role="radio" aria-checked="false">Extra large</button></div></div>
+  <button id="post" type="button" data-fixture-id="submit">Post</button>
+<script>
+  Fixture.applyMissing();
+  const $ = (id) => document.getElementById(id);
+  const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
+  if ($('photos')) Fixture.uploads($('photos'), $('previews'), 'photos');
+  on('desc', 'input', (e) => Fixture.record('description', e.target.value));
+  if ($('cat')) Fixture.menu($('cat'), $('cat-menu'), {
+    Womenswear: { Tops: ['T-shirts', 'Hoodies'], Bottoms: ['Jeans', 'Trousers'], Footwear: ['Trainers', 'Boots'], Dresses: null },
+    Menswear: { Tops: ['T-shirts', 'Hoodies', 'Shirts'], Bottoms: ['Jeans', 'Trousers', 'Shorts'], Footwear: ['Trainers', 'Boots'], 'Coats & jackets': null },
+    'Everything else': null,
+  }, 'category');
+  if ($('brand')) Fixture.typeahead($('brand'), $('brand-list'), ['Nike', 'Adidas', "Levi's", 'Patagonia'], 'brand');
+  on('cond', 'change', (e) => Fixture.record('condition', e.target.options[e.target.selectedIndex].text));
+  on('size', 'change', (e) => Fixture.record('size', e.target.options[e.target.selectedIndex].text));
+  Fixture.record('colors', []);
+  if ($('colour')) {
+    $('colour').addEventListener('click', () => { $('colour-list').hidden = false; });
+    $('colour-list').querySelectorAll('li').forEach((li) => li.addEventListener('click', () => { const a = window.__filled.colors; const n = li.textContent.trim(); const i = a.indexOf(n); if (i === -1) a.push(n); else a.splice(i, 1); }));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('colour-list').hidden = true; });
+  }
+  on('price', 'input', (e) => Fixture.record('price', e.target.value));
+  if ($('parcel')) Fixture.radios($('parcel'), 'parcel');
+  on('post', 'click', () => { Fixture.saveFilled(); location.href = '/depop/products/vintage-levis-jeans-abc/'; });
+</script>
+</body></html>
