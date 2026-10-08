@@ -24,19 +24,24 @@ export function toLocator(scope: Page | Locator, c: LocatorCandidate): Locator {
  * through Playwright's DOM order for `.first()`; the first candidate is the one the fixtures use.
  */
 export async function resolveLocator(
-  scope: Page | Locator, spec: LocatorSpec, opts: { timeoutMs?: number; state?: 'visible' | 'attached'; marketplaceName?: string } = {},
+  scope: Page | Locator, spec: LocatorSpec, opts: { timeoutMs?: number; state?: 'visible' | 'attached' } = {},
 ): Promise<Locator> {
+  const loc = combinedLocator(scope, spec).first();
+  try {
+    await loc.waitFor({ state: opts.state ?? 'visible', timeout: opts.timeoutMs ?? 6000 });
+  } catch {
+    throw adapterError('ELEMENT_NOT_FOUND', null, { what: spec.what });
+  }
+  return loc;
+}
+
+/** All candidates OR-ed together (not narrowed to `.first()`), e.g. to count preview thumbnails. */
+export function combinedLocator(scope: Page | Locator, spec: LocatorSpec): Locator {
   const [head, ...rest] = spec.candidates;
   if (!head) throw new AdapterError('ELEMENT_NOT_FOUND', `Couldn't find “${spec.what}”.`, spec.what);
   let combined = toLocator(scope, head);
   for (const c of rest) combined = combined.or(toLocator(scope, c));
-  const loc = combined.first();
-  try {
-    await loc.waitFor({ state: opts.state ?? 'visible', timeout: opts.timeoutMs ?? 6000 });
-  } catch {
-    throw adapterError('ELEMENT_NOT_FOUND', opts.marketplaceName ?? 'The marketplace', { what: spec.what });
-  }
-  return loc;
+  return combined;
 }
 
 export async function exists(scope: Page | Locator, spec: LocatorSpec, timeoutMs = 1500): Promise<boolean> {

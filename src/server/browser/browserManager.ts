@@ -23,15 +23,18 @@ function clearIdle(mp: MarketplaceId): void {
 async function launch(mp: MarketplaceId): Promise<BrowserContext> {
   const settings = db ? getSettings(db) : null;
   const headless = process.env.CROSSLISTER_HEADLESS === '1';
+  // CROSSLISTER_CHROMIUM_PATH: advanced/test override for the browser binary (e.g. a Chromium that matches Playwright).
+  const executablePath = process.env.CROSSLISTER_CHROMIUM_PATH || undefined;
   const base = {
     headless,
+    ...(executablePath ? { executablePath } : {}),
     viewport: null,
     slowMo: settings?.browser.slowMoMs ?? 0,
     acceptDownloads: false,
     args: ['--window-size=1280,900'],
   };
   // Forbidden here: stealth plugins, hiding automation flags, user-agent spoofing, proxies.
-  const wantChrome = (settings?.browser.channel ?? 'chrome') === 'chrome' && !headless;
+  const wantChrome = (settings?.browser.channel ?? 'chrome') === 'chrome' && !headless && !executablePath;
   let context: BrowserContext;
   if (wantChrome) {
     try {

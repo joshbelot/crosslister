@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Helper widgets fixture</title>
+  <style>
+    body { font-family: sans-serif; padding: 16px; }
+    .box { border: 1px solid #ccc; margin: 8px 0; padding: 8px; }
+    [role=listbox], [role=menu] { border: 1px solid #888; padding: 4px; list-style: none; margin: 4px 0; background: #fff; }
+    li, [role=option], [role=menuitem] { cursor: pointer; padding: 2px 6px; }
+    [hidden] { display: none !important; }
+    .preview { width: 40px; height: 40px; background: #ddd; display: inline-block; margin: 2px; }
+  </style>
+</head>
+<body>
+  <h1>Helper widgets</h1>
+  <script>window.__filled = {};</script>
+
+  <div class="box">
+    <label for="t1">Plain input</label><input id="t1" oninput="__filled.plain = this.value" />
+    <label for="ta">Plain textarea</label><textarea id="ta" oninput="__filled.textarea = this.value"></textarea>
+    <div role="textbox" aria-label="Rich text" contenteditable="true" style="border:1px solid #aaa;min-height:24px" oninput="__filled.rich = this.innerText"></div>
+    <!-- React-like controlled input: the first programmatic change is rejected (value reset), later typing works. -->
+    <label for="ctl">Controlled input</label><input id="ctl" />
+    <script>
+      (function () {
+        let rejected = false;
+        const el = document.getElementById('ctl');
+        el.addEventListener('input', function () {
+          if (!rejected) { rejected = true; el.value = ''; return; }
+          window.__filled.controlled = el.value;
+        });
+      })();
+    </script>
+  </div>
+
+  <div class="box">
+    <label for="up">Photo upload</label>
+    <input id="up" type="file" multiple accept="image/*" style="display:none" />
+    <div id="previews"></div>
+    <script>
+      document.getElementById('up').addEventListener('change', function (e) {
+        const files = Array.from(e.target.files);
+        __filled.photos = files.map((f) => f.name);
+        files.forEach((f, i) => setTimeout(() => {
+          const d = document.createElement('div'); d.className = 'preview'; d.dataset.testid = 'preview'; document.getElementById('previews').appendChild(d);
+        }, 150 * (i + 1)));
+      });
+    </script>
+  </div>
+
+  <div class="box">
+    <label for="sel">Native brand</label>
+    <select id="sel" onchange="__filled.nativeBrand = this.options[this.selectedIndex].text">
+      <option value="">Choose…</option><option>Nike</option><option>Adidas</option><option>Levi's</option><option>New Balance</option>
+    </select>
+  </div>
+
+  <div class="box">
+    <button id="color-trigger" aria-haspopup="listbox" onclick="document.getElementById('color-list').hidden = false">Condition dropdown</button>
+    <ul id="color-list" role="listbox" hidden>
+      <li role="option" onclick="__filled.condition = this.innerText; document.getElementById('color-list').hidden = true">New with tags</li>
+      <li role="option" onclick="__filled.condition = this.innerText; document.getElementById('color-list').hidden = true">Like new</li>
+      <li role="option" onclick="__filled.condition = this.innerText; document.getElementById('color-list').hidden = true">Good</li>
+      <li role="option" onclick="__filled.condition = this.innerText; document.getElementById('color-list').hidden = true">Fair</li>
+    </ul>
+  </div>
+
+  <div class="box">
+    <button id="cat-trigger" onclick="openCat(0)">Category picker</button>
+    <ul id="cat-menu" role="menu" hidden></ul>
+    <script>
+      const TREE = {
+        Women: { Shoes: ['Sneakers', 'Boots'], Tops: ['T-Shirts'] },
+        Men: { Shoes: ['Sneakers', 'Boots', 'Dress Shoes'], Tops: ['T-Shirts', 'Polos'] },
+      };
+      let picked = [];
+      function show(items, level) {
+        const menu = document.getElementById('cat-menu'); menu.hidden = false; menu.innerHTML = '';
+        items.forEach((name) => {
+          const li = document.createElement('li'); li.setAttribute('role', 'menuitem'); li.textContent = name;
+          li.onclick = () => { picked[level] = name; picked.length = level + 1; advance(level + 1); };
+          menu.appendChild(li);
+        });
+      }
+      function advance(level) {
+        if (level === 3) { __filled.category = picked.join(' > '); document.getElementById('cat-menu').hidden = true; return; }
+        let node = TREE; for (let i = 0; i < level; i++) node = node[picked[i]];
+        show(Array.isArray(node) ? node : Object.keys(node), level);
+      }
+      function openCat() { picked = []; show(Object.keys(TREE), 0); }
+    </script>
+  </div>
+
+  <div class="box">
+    <div role="radiogroup" aria-label="Condition group">
+      <button role="radio" aria-checked="false" onclick="__filled.radio = this.innerText">New</button>
+      <button role="radio" aria-checked="false" onclick="__filled.radio = this.innerText">Like New</button>
+      <button role="radio" aria-checked="false" onclick="__filled.radio = this.innerText">Good</button>
+    </div>
+    <fieldset aria-label="Native radios">
+      <input type="radio" name="size" id="r-s" onchange="__filled.nativeRadio = 'Small'" /><label for="r-s">Small</label>
+      <input type="radio" name="size" id="r-m" onchange="__filled.nativeRadio = 'Medium'" /><label for="r-m">Medium</label>
+    </fieldset>
+  </div>
+
+  <div class="box">
+    <button id="colors-trigger" onclick="document.getElementById('colors-list').hidden = false">Colors dropdown</button>
+    <ul id="colors-list" role="listbox" hidden>
+      <li role="option" onclick="toggleColor(this.innerText)">Black</li>
+      <li role="option" onclick="toggleColor(this.innerText)">White</li>
+      <li role="option" onclick="toggleColor(this.innerText)">Blue</li>
+      <li role="option" onclick="toggleColor(this.innerText)">Red</li>
+      <li><button id="colors-done" onclick="document.getElementById('colors-list').hidden = true">Done</button></li>
+    </ul>
+    <script>
+      __filled.colors = [];
+      function toggleColor(name) { const i = __filled.colors.indexOf(name); if (i === -1) __filled.colors.push(name); else __filled.colors.splice(i, 1); }
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.getElementById('colors-list').hidden = true; });
+    </script>
+  </div>
+
+  <div class="box">
+    <label for="brand-ta">Brand typeahead</label>
+    <input id="brand-ta" autocomplete="off" />
+    <ul id="brand-suggestions"></ul>
+    <script>
+      const BRANDS = ['Nike', 'Nike Air Jordan', 'Adidas', "Levi's", 'New Balance'];
+      const ta = document.getElementById('brand-ta');
+      ta.addEventListener('input', () => {
+        const q = ta.value.toLowerCase(); const ul = document.getElementById('brand-suggestions'); ul.innerHTML = '';
+        if (!q) return;
+        BRANDS.filter((b) => b.toLowerCase().includes(q)).forEach((b) => {
+          const li = document.createElement('li'); li.textContent = b;
+          li.onclick = () => { ta.value = b; __filled.brand = b; ul.innerHTML = ''; };
+          ul.appendChild(li);
+        });
+      });
+      ta.addEventListener('keydown', (e) => { if (e.key === 'Enter') { __filled.brandCustom = ta.value; } });
+    </script>
+  </div>
+
+  <div class="box">
+    <label><input type="checkbox" id="cb" onchange="__filled.checkbox = this.checked" /> Free shipping</label>
+  </div>
+</body>
+</html>
