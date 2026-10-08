@@ -1,1 +1,25 @@
 @import "tailwindcss";
+
+@layer base {
+  body { @apply bg-zinc-50 text-zinc-900 antialiased; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+}
+
+@layer components {
+  .btn { @apply inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors disabled:opacity-50; }
+  .btn-sm { @apply h-8 px-3 text-xs; }
+  .btn-primary { @apply bg-indigo-600 text-white hover:bg-indigo-700; }
+  .btn-secondary { @apply border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50; }
+  .btn-danger { @apply bg-red-600 text-white hover:bg-red-700; }
+  .btn-ghost { @apply text-zinc-600 hover:bg-zinc-100; }
+  .input { @apply h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-zinc-100 disabled:text-zinc-400; }
+  textarea.input { @apply h-auto py-2; }
+  .input-error { @apply border-red-500 focus:ring-red-500; }
+  .label { @apply mb-1 block text-sm font-medium text-zinc-700; }
+  .help { @apply mt-1 text-xs text-zinc-500; }
+  .error-text { @apply mt-1 text-xs text-red-600; }
+  .card { @apply rounded-xl border border-zinc-200 bg-white shadow-sm; }
+  .pill { @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium; }
+  .kbd { @apply rounded border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-zinc-600; }
+}
