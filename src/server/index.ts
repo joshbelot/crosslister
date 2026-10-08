@@ -3,6 +3,7 @@ import { ensureDirs, paths } from './paths';
 import { openDb } from './db/client';
 import { runMigrations } from './db/migrate';
 import { buildApp } from './app';
+import { cleanupEmptyDrafts } from './services/listings';
 import { initLogger, logger, purgeOldLogs } from './services/logger';
 
 ensureDirs();
@@ -11,6 +12,7 @@ runMigrations(db);
 initLogger(db);
 logger.info('SERVER', 'Starting Crosslister');
 purgeOldLogs(db, 30);
+cleanupEmptyDrafts(db);
 
 const app = await buildApp({ db });
 await app.listen({ host: '127.0.0.1', port: config.port });

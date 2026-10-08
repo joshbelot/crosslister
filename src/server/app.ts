@@ -11,6 +11,7 @@ import { AppError } from './errors';
 import { logger } from './services/logger';
 import { eventsRoutes } from './routes/events';
 import { healthRoutes } from './routes/health';
+import { listingsRoutes } from './routes/listings';
 import { logsRoutes } from './routes/logs';
 import { settingsRoutes } from './routes/settings';
 
@@ -69,6 +70,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     await api.register(eventsRoutes);
     await api.register(logsRoutes);
     await api.register(settingsRoutes);
+    await api.register(listingsRoutes);
   }, { prefix: '/api' });
 
   if (config.isProd) {
