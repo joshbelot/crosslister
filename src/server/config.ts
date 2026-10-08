@@ -6,7 +6,7 @@ export const config = {
   isProd: process.env.NODE_ENV === 'production',
   dataDir: path.resolve(process.env.CROSSLISTER_DATA_DIR ?? './data'),
   profilesDir: path.resolve(process.env.CROSSLISTER_PROFILES_DIR ?? './browser-profiles'),
-  logsDir: path.resolve('./logs'),
+  logsDir: path.resolve(process.env.CROSSLISTER_LOGS_DIR ?? './logs'),
   secretsBackend: (process.env.CROSSLISTER_SECRETS_BACKEND ??
     (process.platform === 'darwin' ? 'keychain' : 'file')) as 'keychain' | 'file',
   ebay: {
