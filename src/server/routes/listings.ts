@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { INVENTORY_FILTERS } from '../../shared/constants';
 import { listingCreateSchema, listingPatchSchema } from '../../shared/schemas';
+import { runPrepareForAll } from '../services/marketplaceListings';
 import {
   archiveListing, createListing, deleteListing, duplicateListing, getListing, listListings, unarchiveListing,
   updateListing,
@@ -26,7 +27,10 @@ export async function listingsRoutes(app: FastifyInstance): Promise<void> {
 
   app.patch('/listings/:id', async (req) => {
     const { id } = idParams.parse(req.params);
-    return updateListing(app.db, id, listingPatchSchema.parse(req.body ?? {}));
+    const patch = listingPatchSchema.parse(req.body ?? {});
+    const detail = updateListing(app.db, id, patch);
+    if (patch.title !== undefined || patch.brand !== undefined || patch.categoryId !== undefined) runPrepareForAll(app.db, id);
+    return detail;
   });
 
   app.delete('/listings/:id', async (req, reply) => {

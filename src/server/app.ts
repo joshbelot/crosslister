@@ -13,6 +13,7 @@ import { eventsRoutes } from './routes/events';
 import { healthRoutes } from './routes/health';
 import { listingsRoutes } from './routes/listings';
 import { logsRoutes } from './routes/logs';
+import { marketplacesRoutes } from './routes/marketplaces';
 import { photosRoutes } from './routes/photos';
 import { settingsRoutes } from './routes/settings';
 
@@ -73,6 +74,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     await api.register(settingsRoutes);
     await api.register(listingsRoutes);
     await api.register(photosRoutes);
+    await api.register(marketplacesRoutes);
   }, { prefix: '/api' });
 
   if (config.isProd) {
