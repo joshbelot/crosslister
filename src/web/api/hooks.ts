@@ -72,6 +72,11 @@ export const usePreview = (id: string | undefined, mp: MarketplaceId) =>
     enabled: !!id && id !== 'new',
   });
 
+export interface Health { ok: boolean; version: string; dataDir: string; profilesDir: string; logsDir: string; backupsDir: string; platform: string }
+export const useHealth = () => useQuery({ queryKey: ['health'], queryFn: () => api.get<Health>('/api/health') });
+export const useBackups = () =>
+  useQuery({ queryKey: ['backups'], queryFn: async () => (await api.get<{ items: Array<{ name: string; bytes: number; createdAt: string }> }>('/api/export/backups')).items });
+
 // ---------------------------------------------------------------- mutations
 function useApiMutation<TArgs, TResult>(fn: (args: TArgs) => Promise<TResult>, invalidate: (qc: QueryClient, args: TArgs, result: TResult) => void = () => {}, opts: { silent?: boolean } = {}) {
   const qc = useQueryClient();

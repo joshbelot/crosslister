@@ -11,6 +11,7 @@ import { AppError } from './errors';
 import { initBrowserManager } from './browser/browserManager';
 import { jobRunner } from './services/jobRunner';
 import { logger } from './services/logger';
+import { exportRoutes } from './routes/export';
 import { eventsRoutes } from './routes/events';
 import { healthRoutes } from './routes/health';
 import { jobsRoutes } from './routes/jobs';
@@ -81,6 +82,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     await api.register(marketplacesRoutes);
     await api.register(jobsRoutes);
     await api.register(salesRoutes);
+    await api.register(exportRoutes);
   }, { prefix: '/api' });
 
   if (config.isProd) {

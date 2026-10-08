@@ -17,3 +17,5 @@
 - **Job plug-ins (M9):** `registerJobHandler(type, fn)` in `jobRunner.ts` is how later milestones add `status_check` and `import_*` job types without the runner knowing about them. `jobRunner.runOnce()/idle()/abort()` exist for tests.
 - **Cancellation / browser closed (M9):** aborting a job's controller with an `AdapterError('BROWSER_CLOSED')` reason makes the job end `FAILED` (not `CANCELLED`) with that message.
 - **Vite proxy vs. `src/web/api/` (M10):** the spec puts frontend modules in `src/web/api/*.ts` *and* proxies `/api` to the backend, so Vite's dev server forwarded `/api/hooks.ts` to Fastify (404). `vite.config.ts` adds a `bypass` so `/api/<name>.ts` requests are served by Vite itself.
+- **archiver v8 (M15):** the installed `archiver` is ESM-only and exports `ZipArchive` (instead of the default `archiver('zip')` factory shown in the spec); the ZIP contents and behavior are as specified.
+- **Settings page (M15):** all tabs share one draft of the full Settings object, so the per-tab **Save** button saves everything that was changed.
