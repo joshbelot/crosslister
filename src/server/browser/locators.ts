@@ -1,5 +1,5 @@
 import type { Locator, Page } from 'playwright';
-import { AdapterError, adapterError } from '../marketplaces/common';
+import { AdapterError, adapterError } from '../marketplaces/adapterError';
 
 export type LocatorCandidate =
   | { role: Parameters<Page['getByRole']>[0]; name: string | RegExp; exact?: boolean }

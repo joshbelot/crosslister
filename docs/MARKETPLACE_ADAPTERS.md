@@ -52,6 +52,13 @@ Limits and known issues are added here as each adapter is built.
 - **Known limits:** the 1,000-character description limit includes the title and hashtags; parcel-size tiers are estimates; Depop's partner API (if granted) would be a better long-term route.
 - **Calibration:** not yet calibrated against the live site. Selectors: `src/server/marketplaces/depop/selectors.ts`.
 
+### eBay (official API — untested against a real account)
+
+- **Automated:** photos are uploaded to eBay, the listing is verified (fees estimated), then added; item specifics are filled from your listing and eBay's allowed values; category is suggested automatically (change it under Customize per marketplace → eBay category); condition is chosen from the categories' allowed conditions (override under eBay condition). Updates revise title, description and price only. Ending a listing uses "NotAvailable"; "already ended" counts as success.
+- **You do:** one-time developer setup ([SETUP.md](SETUP.md)), pick business policies, and confirm "Publish now" if you turned autoSubmit off.
+- **Known limits:** fixed-price listings only (Good 'Til Cancelled); US marketplace; requires the three business policies and a ZIP code.
+- **Verification:** all HTTP is mocked in the test suite (the listing/verify/add flow, token refresh, OAuth callback). It has **not** been run against eBay production or sandbox because no keys were available.
+
 ## Calibration
 
 The selectors, labels and category trees in the adapters are best-effort knowledge of the live sites and were **not verified against them**. The tests use local HTML fixtures, which verify the app's flow logic and helpers — **not** accuracy against the real sites.

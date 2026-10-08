@@ -66,7 +66,8 @@ function Tab({ mp, listingId, listingTitle }: { mp: MarketplaceId; listingId: st
         <section className="space-y-4">
           <h3 className="text-sm font-semibold text-zinc-700">{info.name} fields</h3>
           {info.dataFields.map((def) => (
-            <DataFieldInput key={def.key} def={def} listingId={listingId} data={ml?.data ?? {}} value={(ml?.data ?? {})[def.key]}
+            <DataFieldInput key={def.key} def={def} listingId={listingId} marketplaceId={mp} data={ml?.data ?? {}} value={(ml?.data ?? {})[def.key]}
+              onCommitMany={(patch) => save({ data: { ...(ml?.data ?? {}), ...patch } })}
               onCommit={(v) => {
                 const next = { ...(ml?.data ?? {}) };
                 if (v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) delete next[def.key]; else next[def.key] = v;

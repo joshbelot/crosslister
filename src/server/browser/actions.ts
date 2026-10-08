@@ -1,5 +1,5 @@
 import type { Locator, Page } from 'playwright';
-import { AdapterError, adapterError } from '../marketplaces/common';
+import { AdapterError, adapterError } from '../marketplaces/adapterError';
 import type { JobContext } from '../services/jobContext';
 import { logger } from '../services/logger';
 import { combinedLocator, resolveLocator, type LocatorSpec } from './locators';

@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><EndFixedPriceItemResponse xmlns="urn:ebay:apis:eBLBaseComponents"><Ack>Failure</Ack><Errors><ShortMessage>Auction ended.</ShortMessage><LongMessage>The auction has already been ended.</LongMessage><ErrorCode>1047</ErrorCode><SeverityCode>Error</SeverityCode></Errors></EndFixedPriceItemResponse>
