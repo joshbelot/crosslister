@@ -106,7 +106,7 @@ export const PhotoManager = forwardRef<PhotoManagerHandle, {
   const cropPhoto = cropping ? photos.find((p) => p.id === cropping) : undefined;
 
   return (
-    <section aria-label="Photos">
+    <section aria-label="Photos" id="field-photos">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-zinc-700">Photos</h2>
         <span className="text-xs text-zinc-500">{sorted.length} / {MAX_PHOTOS_PER_LISTING}</span>

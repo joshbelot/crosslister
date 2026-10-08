@@ -88,10 +88,15 @@ export function ListingEditorPage() {
     'mod+enter': () => { void openCrosslist(); },
   });
 
-  const focusField = (name: string) => {
-    const el = document.getElementById(`field-${name}`);
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    setTimeout(() => (el?.matches('input,textarea,select,button') ? el : el?.querySelector<HTMLElement>('input,button,textarea'))?.focus(), 150);
+  const focusField = (rawName: string) => {
+    const MORE = ['msrpCents', 'weight-lb', 'model', 'material', 'conditionNotes', 'quantity'];
+    const name = rawName === 'shipping.weightOz' ? 'weight-lb' : rawName.startsWith('data') ? 'title' : rawName;
+    if (MORE.includes(name)) { setMoreOpen(true); try { localStorage.setItem('editor.moreOpen', '1'); } catch { /* ignore */ } }
+    setTimeout(() => {
+      const el = document.getElementById(`field-${name}`);
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      setTimeout(() => (el?.matches('input,textarea,select,button') ? el : el?.querySelector<HTMLElement>('input,button,textarea'))?.focus(), 150);
+    }, MORE.includes(name) ? 80 : 0);
   };
 
   const dept = values.categoryId ? departmentOf(values.categoryId) : null;

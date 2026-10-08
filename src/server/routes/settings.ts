@@ -34,6 +34,19 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
     };
   });
 
+  // Small UI flags stored in the settings table (allow-listed keys only).
+  const UI_KV_KEYS = ['poshmark_notice_ack'] as const;
+  app.get('/settings/kv/:key', async (req) => {
+    const { key } = z.object({ key: z.enum(UI_KV_KEYS) }).parse(req.params);
+    return { value: getKv<unknown>(app.db, key, null) };
+  });
+  app.put('/settings/kv/:key', async (req) => {
+    const { key } = z.object({ key: z.enum(UI_KV_KEYS) }).parse(req.params);
+    const { value } = z.object({ value: z.unknown() }).parse(req.body);
+    setKv(app.db, key, value);
+    return { value };
+  });
+
   app.get('/settings/category-map/:mp', async (req) => {
     const { mp } = z.object({ mp: marketplaceIdSchema }).parse(req.params);
     const adapter = getAdapter(mp);
