@@ -12,6 +12,7 @@ import { logger } from './services/logger';
 import { eventsRoutes } from './routes/events';
 import { healthRoutes } from './routes/health';
 import { logsRoutes } from './routes/logs';
+import { settingsRoutes } from './routes/settings';
 
 declare module 'fastify' {
   interface FastifyInstance { db: Db }
@@ -67,6 +68,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     await api.register(healthRoutes);
     await api.register(eventsRoutes);
     await api.register(logsRoutes);
+    await api.register(settingsRoutes);
   }, { prefix: '/api' });
 
   if (config.isProd) {
