@@ -13,12 +13,17 @@ export interface TestApp {
 
 /** Creates an app backed by a temp data dir. Env vars are set BEFORE the server modules are imported. */
 export async function createTestApp(opts: { initLogger?: boolean } = {}): Promise<TestApp> {
-  const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'crosslister-test-'));
-  process.env.CROSSLISTER_DATA_DIR = path.join(dataDir, 'data');
-  process.env.CROSSLISTER_PROFILES_DIR = path.join(dataDir, 'profiles');
-  process.env.CROSSLISTER_LOGS_DIR = path.join(dataDir, 'logs');
-  process.env.CROSSLISTER_SECRETS_BACKEND = 'file';
-  process.env.CROSSLISTER_QUIET = '1';
+  // tests/helpers/setupEnv.ts normally creates the temp root; fall back to creating one here.
+  let dataDir = process.env.CROSSLISTER_TEST_ROOT;
+  if (!dataDir) {
+    dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'crosslister-test-'));
+    process.env.CROSSLISTER_DATA_DIR = path.join(dataDir, 'data');
+    process.env.CROSSLISTER_PROFILES_DIR = path.join(dataDir, 'profiles');
+    process.env.CROSSLISTER_LOGS_DIR = path.join(dataDir, 'logs');
+    process.env.CROSSLISTER_SECRETS_BACKEND = 'file';
+    process.env.CROSSLISTER_QUIET = '1';
+  }
+  const root = dataDir;
   const { ensureDirs, paths } = await import('../../src/server/paths');
   const { openDb } = await import('../../src/server/db/client');
   const { runMigrations } = await import('../../src/server/db/migrate');
@@ -31,12 +36,12 @@ export async function createTestApp(opts: { initLogger?: boolean } = {}): Promis
   const app = await buildApp({ db, startJobRunner: false });
   await app.ready();
   return {
-    app, db, dataDir,
+    app, db, dataDir: root,
     async cleanup() {
       await app.close();
       closeLogger();
       db.$client.close();
-      await fs.rm(dataDir, { recursive: true, force: true });
+      await fs.rm(root, { recursive: true, force: true });
     },
   };
 }

@@ -15,6 +15,7 @@ import { listingDir } from '../paths';
 import { events } from './events';
 import { computeNeedsAttention, recomputeListingStatus } from './listingStatus';
 import { rowToJob, rowToListing, rowToMarketplaceListing, rowToPhoto } from './mappers';
+import { jobRunner } from './jobRunner';
 import { clonePhotos } from './photos';
 import { getKv, getSettings, setKv } from './settings';
 
@@ -133,7 +134,8 @@ export function deleteListing(db: Db, id: string, opts: { force: boolean }): voi
   if (active.length > 0 && !opts.force) {
     throw new AppError('LISTING_HAS_ACTIVE', 409, 'This item is still live on a marketplace. Deactivate it first, or delete anyway.');
   }
-  // Jobs and photo rows go away with the listing (ON DELETE CASCADE).
+  // Stop anything still running for this listing; job and photo rows go away with it (ON DELETE CASCADE).
+  for (const j of db.select().from(jobs).where(eq(jobs.listingId, id)).all()) jobRunner.abort(j.id);
   db.delete(listings).where(eq(listings.id, id)).run();
   fs.rmSync(listingDir(id), { recursive: true, force: true });
   events.publish({ type: 'listing.deleted', listingId: id });

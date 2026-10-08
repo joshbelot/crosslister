@@ -8,9 +8,12 @@ import { MAX_UPLOAD_BYTES } from '../shared/constants';
 import type { Db } from './db/client';
 import { config } from './config';
 import { AppError } from './errors';
+import { initBrowserManager } from './browser/browserManager';
+import { jobRunner } from './services/jobRunner';
 import { logger } from './services/logger';
 import { eventsRoutes } from './routes/events';
 import { healthRoutes } from './routes/health';
+import { jobsRoutes } from './routes/jobs';
 import { listingsRoutes } from './routes/listings';
 import { logsRoutes } from './routes/logs';
 import { marketplacesRoutes } from './routes/marketplaces';
@@ -75,6 +78,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     await api.register(listingsRoutes);
     await api.register(photosRoutes);
     await api.register(marketplacesRoutes);
+    await api.register(jobsRoutes);
   }, { prefix: '/api' });
 
   if (config.isProd) {
@@ -85,6 +89,12 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       }
       return reply.sendFile('index.html');
     });
+  }
+
+  initBrowserManager(deps.db);
+  if (deps.startJobRunner !== false) {
+    jobRunner.start(deps.db);
+    app.addHook('onClose', async () => { await jobRunner.stop(); });
   }
 
   return app;
