@@ -35,6 +35,14 @@ Limits and known issues are added here as each adapter is built.
 - **Known limits:** Mercari has no "Multicolor" option (color is left empty); "New without tags" is sent as "Like new"; only one color is chosen.
 - **Calibration:** not yet calibrated against the live site. Selectors: `src/server/marketplaces/mercari/selectors.ts`.
 
+### Poshmark (assisted, uncalibrated)
+
+- **Automated:** photos (max 16), title (80), description (1,500), category path, size, condition, brand (free text allowed), up to 2 colors, up to 3 style tags (from the listing's tags unless set), original price (MSRP) and listing price, then **Next** to open the review page.
+- **You do:** log in, review, click **List**. The app shows a one-time notice that Poshmark's terms restrict automated tools.
+- **Deactivate:** sets the listing to "Not For Sale" (reversible) and clicks Update; if the Availability control is missing, it falls back to Delete listing → Yes.
+- **Known limits:** whole-dollar prices only (cents are rounded, with a warning); needs MSRP and size; no categories for Collectibles & Other; no "Multicolor".
+- **Calibration:** not yet calibrated against the live site. Selectors: `src/server/marketplaces/poshmark/selectors.ts`.
+
 ## Calibration
 
 The selectors, labels and category trees in the adapters are best-effort knowledge of the live sites and were **not verified against them**. The tests use local HTML fixtures, which verify the app's flow logic and helpers — **not** accuracy against the real sites.

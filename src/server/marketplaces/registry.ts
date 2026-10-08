@@ -4,6 +4,7 @@ import { AppError } from '../errors';
 import { setNoAutoSubmitProvider } from '../services/settings';
 import { manualAdapter } from './manual';
 import { mercariAdapter } from './mercari';
+import { poshmarkAdapter } from './poshmark';
 import type { MarketplaceAdapter } from './types';
 
 // Until a marketplace's own milestone lands, it is registered as a manual adapter (Phase 1 supports every marketplace manually).
@@ -11,7 +12,7 @@ import type { MarketplaceAdapter } from './types';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let adapters: MarketplaceAdapter<any>[] = [
   mercariAdapter,
-  manualAdapter('poshmark', 'Poshmark', { home: 'https://poshmark.com/', sell: 'https://poshmark.com/create-listing' }),
+  poshmarkAdapter,
   manualAdapter('depop', 'Depop', { home: 'https://www.depop.com/', sell: 'https://www.depop.com/products/create/' }),
   manualAdapter('facebook', 'Facebook Marketplace', { home: 'https://www.facebook.com/marketplace/', sell: 'https://www.facebook.com/marketplace/create/item' }),
   manualAdapter('ebay', 'eBay', { home: 'https://www.ebay.com/', sell: 'https://www.ebay.com/sl/sell' }),

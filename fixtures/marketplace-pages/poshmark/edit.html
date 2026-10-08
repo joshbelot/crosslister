@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Poshmark — Edit listing (fixture)</title>
+<script src="/_shared/fixture.js"></script>
+<script>Fixture.requireLogin('/poshmark/login.html');</script></head>
+<body>
+  <nav><a href="/closet/tester">My Closet</a></nav>
+  <h1>Edit listing</h1>
+  <div data-fixture-id="availability"><label for="avail">Availability</label>
+    <select id="avail"><option>For Sale</option><option>Not For Sale</option></select></div>
+  <button id="update" type="button" data-fixture-id="update">Update</button>
+  <button id="delete" type="button" data-fixture-id="delete">Delete Listing</button>
+  <div id="dialog" role="dialog" aria-label="Delete listing" hidden><p>Delete this listing?</p>
+    <button id="yes" type="button">Yes</button><button type="button" onclick="document.getElementById('dialog').hidden = true">No</button></div>
+<script>
+  Fixture.applyMissing();
+  const $ = (id) => document.getElementById(id);
+  if ($('update')) $('update').addEventListener('click', () => { localStorage.setItem('cl-availability', $('avail') ? $('avail').value : ''); location.href = '/poshmark/closet/tester'; });
+  if ($('delete')) $('delete').addEventListener('click', () => { $('dialog').hidden = false; });
+  $('yes').addEventListener('click', () => { localStorage.setItem('cl-deleted', '1'); location.href = '/poshmark/closet/tester'; });
+</script>
+</body></html>
