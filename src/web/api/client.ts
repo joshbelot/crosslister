@@ -4,7 +4,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(method: string, path: string, body?: unknown, form?: FormData): Promise<T> {
+async function request<T>(method: string, path: string, body?: unknown, form?: FormData, keepalive = false): Promise<T> {
   const headers: Record<string, string> = { 'X-Crosslister': '1' };
   let payload: BodyInit | undefined;
   if (form) {
@@ -15,7 +15,7 @@ async function request<T>(method: string, path: string, body?: unknown, form?: F
   }
   let res: Response;
   try {
-    res = await fetch(path, { method, headers, body: payload });
+    res = await fetch(path, { method, headers, body: payload, keepalive });
   } catch {
     throw new ApiError(0, 'NETWORK', "Couldn't reach the app server. Is it running?");
   }
@@ -35,6 +35,8 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body ?? {}),
   patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body ?? {}),
+  /** Best-effort PATCH that survives page unloads. */
+  patchKeepalive: (path: string, body: unknown) => request<unknown>('PATCH', path, body, undefined, true).catch(() => undefined),
   del: (path: string) => request<void>('DELETE', path),
   upload<T>(path: string, files: File[]): Promise<T> {
     const form = new FormData();
