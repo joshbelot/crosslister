@@ -25,6 +25,7 @@ import {
   EBAY_HOSTS, EBAY_LISTING_REGEX, autoAspects, categoryQuery, hasAutoValue, mergeAspects, pickConditionId,
 } from './mapping';
 import { getAspects, getConditions, getPolicies, suggestCategories } from './rest';
+import { ebayImporter } from './importer';
 import { EbayTradingError, requestXml, tradingCall } from './trading';
 import { buildItemXml, cdata, descriptionToHtml, escapeXml } from './xml';
 
@@ -68,6 +69,7 @@ export const ebayAdapter: MarketplaceAdapter<EbayData> = {
   name: 'eBay',
   kind: 'api',
   capabilities,
+  importer: ebayImporter,
   photoSpec: { maxPhotos: 24, maxLongEdge: 1600, quality: 90 },
   urls: { home: ebayHosts().home, sell: 'https://www.ebay.com/sl/sell' },
   dataSchema,
