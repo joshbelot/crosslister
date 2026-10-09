@@ -52,6 +52,14 @@ Limits and known issues are added here as each adapter is built.
 - **Known limits:** the 1,000-character description limit includes the title and hashtags; parcel-size tiers are estimates; Depop's partner API (if granted) would be a better long-term route.
 - **Calibration:** not yet calibrated against the live site. Selectors: `src/server/marketplaces/depop/selectors.ts`.
 
+### Facebook Marketplace (assisted, uncalibrated)
+
+- **Automated:** photos (max 10), title (100), price (whole dollars), category (types search terms such as "Men's Clothing" and picks the match), condition, description, brand and size when the form shows them, "Hide from friends" if you turn it on, then **Next**.
+- **You do:** log in and click **Publish** — always. The app never clicks Publish or Delete on Facebook, and Facebook has a low daily limit (Settings → Marketplaces).
+- **Finding your listing:** if Facebook doesn't land on the new listing's page, the app looks at "Your listings" and matches by title; otherwise paste the link.
+- **Known limits:** no status checks; new accounts and frequent posting may be limited by Facebook.
+- **Calibration:** not yet calibrated against the live site. Selectors: `src/server/marketplaces/facebook/selectors.ts`.
+
 ### eBay (official API — untested against a real account)
 
 - **Automated:** photos are uploaded to eBay, the listing is verified (fees estimated), then added; item specifics are filled from your listing and eBay's allowed values; category is suggested automatically (change it under Customize per marketplace → eBay category); condition is chosen from the categories' allowed conditions (override under eBay condition). Updates revise title, description and price only. Ending a listing uses "NotAvailable"; "already ended" counts as success.

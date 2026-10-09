@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Facebook Marketplace — Item (fixture)</title>
+<script src="/_shared/fixture.js"></script><script>Fixture.requireLogin('/facebook/login.html');</script>
+<style>[hidden]{display:none!important}</style></head>
+<body>
+  <nav><a href="/facebook/sell.html">Marketplace</a></nav>
+  <h1>Your listing is live</h1>
+  <button id="more" type="button" data-fixture-id="menu">More options</button>
+  <div id="menu" role="menu" hidden><div role="menuitem" id="delete" tabindex="0">Delete listing</div></div>
+  <div id="dialog" role="dialog" aria-label="Delete listing?" hidden><p>Delete this listing?</p>
+    <button id="confirm" type="button">Delete</button><button type="button" onclick="document.getElementById('dialog').hidden = true">Cancel</button></div>
+<script>
+  Fixture.applyMissing();
+  const $ = (id) => document.getElementById(id);
+  if ($('more')) $('more').addEventListener('click', () => { $('menu').hidden = false; });
+  $('delete').addEventListener('click', () => { $('menu').hidden = true; $('dialog').hidden = false; });
+  $('confirm').addEventListener('click', () => { localStorage.setItem('cl-deleted', '1'); location.href = '/facebook/marketplace/you/selling?deleted=1'; });
+</script>
+</body></html>

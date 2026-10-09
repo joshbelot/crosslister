@@ -62,7 +62,7 @@ window.Fixture = {
       files.forEach((f, i) => setTimeout(() => {
         const d = document.createElement('div'); d.dataset.testid = 'Photo-' + i; if (wrapperClass) d.className = wrapperClass;
         const img = document.createElement('img'); img.width = 40; img.height = 40; img.alt = 'photo ' + (i + 1);
-        img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACw='; d.appendChild(img); container.appendChild(d);
+        img.src = URL.createObjectURL(f); d.appendChild(img); container.appendChild(d);
       }, 120 * (i + 1)));
     });
   },

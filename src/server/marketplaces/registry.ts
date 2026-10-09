@@ -5,6 +5,7 @@ import { setNoAutoSubmitProvider } from '../services/settings';
 import { manualAdapter } from './manual';
 import { depopAdapter } from './depop';
 import { ebayAdapter } from './ebay';
+import { facebookAdapter } from './facebook';
 import { mercariAdapter } from './mercari';
 import { poshmarkAdapter } from './poshmark';
 import type { MarketplaceAdapter } from './types';
@@ -21,7 +22,7 @@ function defaultAdapters(): AnyAdapter[] {
     mercariAdapter,
     poshmarkAdapter,
     depopAdapter,
-    manualAdapter('facebook', 'Facebook Marketplace', { home: 'https://www.facebook.com/marketplace/', sell: 'https://www.facebook.com/marketplace/create/item' }),
+    facebookAdapter,
     ebayAdapter,
     manualAdapter('grailed', 'Grailed', { home: 'https://www.grailed.com/', sell: 'https://www.grailed.com/sell' }),
     manualAdapter('vinted', 'Vinted', { home: 'https://www.vinted.com/', sell: 'https://www.vinted.com/items/new' }, { titleMaxLength: 100, descriptionMaxLength: 2000 }),
