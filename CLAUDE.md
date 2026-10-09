@@ -2,7 +2,7 @@
 
 Personal, single-user, local-only crosslisting app (Vendoo alternative) for a Mac.
 
-**Current milestone:** M31 (M30 done — see `git log`; spec in `docs/spec/README.md`).
+**Current milestone:** M32 (M31 done — see `git log`; spec in `docs/spec/README.md`).
 
 ## Read first
 1. `docs/spec/README.md` — rules + milestone list (M1…M39). Work strictly in order.

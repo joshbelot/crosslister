@@ -31,12 +31,14 @@ export function reverseCondition(mp: MarketplaceId, text: string | null, descrip
   if (!text) return null;
   if (mp === 'ebay') return EBAY_CONDITION_IDS[text.trim()] ?? 'good';
   const table = TABLES[mp];
+  // Bare schema.org words (from JSON-LD) take the spec's fixed mapping rather than a fuzzy label match.
+  const schemaWord = /^(new|used|refurbished|damaged)$/i.test(text.trim()) && !table;
   if (table) {
     const labels = [...new Set(Object.values(table).flat())];
     const m = bestMatch(text, labels, 0.8);
     if (m) return CONDITIONS.find((c) => table[c].includes(m.option)) ?? null;
   }
-  const generic = bestMatch(text, CONDITIONS.map((c) => CONDITION_LABELS[c]), 0.8);
+  const generic = schemaWord ? null : bestMatch(text, CONDITIONS.map((c) => CONDITION_LABELS[c]), 0.8);
   if (generic) return CONDITIONS.find((c) => CONDITION_LABELS[c] === generic.option) ?? null;
   const so = schemaOrgCondition(text);
   if (so === 'new_without_tags' && /\btags\b/i.test(description) && !/without tags|no tags/i.test(description)) return 'new_with_tags';
