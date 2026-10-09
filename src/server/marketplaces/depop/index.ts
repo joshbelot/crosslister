@@ -6,7 +6,7 @@ import { chooseMany, chooseOption, choosePath, chooseRadio, click, fillText, typ
 import { exists } from '../../browser/locators';
 import {
   browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapColors, mapCondition,
-  pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, type BrowserRecipe, type DeactivateRecipe,
+  pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
 } from '../common';
 import type { BrowserAdapter } from '../types';
 import {
@@ -141,6 +141,20 @@ export const depopAdapter: BrowserAdapter<DepopData> = {
       detectPublished: (page, _l, signal) => detectByUrlOrLink(page, DEPOP_LISTING_REGEX, signal, { successText: /listed|posted|live/i }),
     };
     return runBrowserPublish(ctx, depopAdapter, l, recipe);
+  },
+
+  async update(ctx, l, ml) {
+    const recipe: UpdateRecipe<DepopData> = {
+      editUrl,
+      fields: [
+        { key: 'description', label: 'Updating description', run: (page) => fillText(page, sel.description, l.description) },
+        { key: 'price', label: 'Updating price', run: async (page) => { if (l.priceCents !== null) await fillText(page, sel.price, (l.priceCents / 100).toFixed(2)); } },
+      ],
+      submitButton: sel.updateSubmit,
+      submitLabel: 'Save',
+      detectSaved: (page, _l, signal) => pollUntil(signal, async () => !/\/products\/edit\//.test(new URL(page.url()).pathname)),
+    };
+    await runBrowserUpdate(ctx, depopAdapter, l, ml, recipe);
   },
 
   async deactivate(ctx, ml) {

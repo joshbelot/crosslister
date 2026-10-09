@@ -5,7 +5,9 @@ import clsx from 'clsx';
 
 import { departmentOf } from '../../shared/taxonomy';
 import type { Measurements } from '../../shared/types';
-import { useMarketplaces, useValidation } from '../api/hooks';
+import { useMarketplaces, useUpdateRemote, useValidation } from '../api/hooks';
+import { MARKETPLACE_NAMES } from '../../shared/constants';
+import { setUi } from '../lib/ui';
 import { BrandInput } from '../components/fields/BrandInput';
 import { CategoryPicker } from '../components/fields/CategoryPicker';
 import { ColorPicker } from '../components/fields/ColorPicker';
@@ -68,6 +70,23 @@ export function ListingEditorPage() {
   const titleLimit = selectedInfos.reduce<number | null>((min, m) => (m.capabilities.titleMaxLength !== null && (min === null || m.capabilities.titleMaxLength < min) ? m.capabilities.titleMaxLength : min), null);
   const titleShort = selectedInfos.filter((m) => m.capabilities.titleMaxLength !== null && values.title.length > m.capabilities.titleMaxLength).map((m) => m.name);
   const descLimit = selectedInfos.reduce<number | null>((min, m) => (min === null || m.capabilities.descriptionMaxLength < min ? m.capabilities.descriptionMaxLength : min), null);
+
+  // "Push changes?" banner (05 §7.5): the item is live somewhere and title/description/price changed since this page loaded.
+  const updateRemote = useUpdateRemote();
+  const [baseline, setBaseline] = useState<{ title: string; description: string; priceCents: number | null } | null>(null);
+  useEffect(() => {
+    if (listing && !baseline) setBaseline({ title: listing.title, description: listing.description, priceCents: listing.priceCents });
+  }, [listing, baseline]);
+  const liveTargets = (listing?.marketplaces ?? []).filter((m) => m.status === 'active' && marketplaces.find((x) => x.id === m.marketplaceId)?.capabilities.update !== 'none');
+  const pushChanged = Boolean(listing && baseline && liveTargets.length > 0
+    && (listing.title !== baseline.title || listing.description !== baseline.description || listing.priceCents !== baseline.priceCents));
+  const pushChanges = async () => {
+    await draft.flush();
+    if (!listing) return;
+    for (const m of liveTargets) updateRemote.mutate({ id: listing.id, mp: m.marketplaceId });
+    setBaseline({ title: listing.title, description: listing.description, priceCents: listing.priceCents });
+    setUi({ drawerOpen: true });
+  };
 
   const validation = useValidation(draft.listingId ?? undefined, draft.selected, true);
   const readyCount = validation.data?.marketplaces.filter((m) => m.ready).length ?? 0;
@@ -235,6 +254,18 @@ export function ListingEditorPage() {
           <MarketplaceChips selected={draft.selected} onChange={draft.setSelected} />
         </div>
       </div>
+
+      {pushChanged && listing && (
+        <div className="fixed inset-x-0 bottom-[65px] z-20 border-t border-amber-200 bg-amber-50" data-testid="push-banner">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-2.5 text-sm text-amber-900">
+            <span>This item is live on {liveTargets.map((m) => MARKETPLACE_NAMES[m.marketplaceId]).join(', ')}. Push changes? <span className="text-amber-700">(Title, description and price only — photos and category aren't updated.)</span></span>
+            <span className="flex shrink-0 gap-2">
+              <button className="btn btn-primary btn-sm" disabled={updateRemote.isPending} onClick={() => void pushChanges()}>Update listings</button>
+              <button className="btn btn-secondary btn-sm" onClick={() => setBaseline({ title: listing.title, description: listing.description, priceCents: listing.priceCents })}>Not now</button>
+            </span>
+          </div>
+        </div>
+      )}
 
       <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-zinc-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">

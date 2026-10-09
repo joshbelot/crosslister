@@ -14,7 +14,7 @@ import type { ColorId } from '../../../shared/colors';
 import { sizeTypeOf } from '../../../shared/taxonomy';
 import { resolveWaiter } from '../../services/jobContext';
 import { getJobRow, updateJob } from '../../services/jobs';
-import { getConnection } from '../../services/connections';
+import { getConnection } from '../../services/connectionStore';
 import { logger } from '../../services/logger';
 import { getSettings, setKv } from '../../services/settings';
 import { adapterError } from '../adapterError';

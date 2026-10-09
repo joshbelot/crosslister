@@ -6,7 +6,7 @@ import { choosePath, chooseOption, chooseRadio, click, fillText, typeahead, uplo
 import { exists } from '../../browser/locators';
 import {
   browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapColors, mapCondition,
-  pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, type BrowserRecipe, type DeactivateRecipe,
+  pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
 } from '../common';
 import type { BrowserAdapter, EffectiveListing } from '../types';
 import {
@@ -141,6 +141,21 @@ export const mercariAdapter: BrowserAdapter<MercariData> = {
       detectPublished: (page, _l, signal) => detectByUrlOrLink(page, MERCARI_LISTING_REGEX, signal, { successText: /listed|is live|congrat/i }),
     };
     return runBrowserPublish(ctx, mercariAdapter, l, recipe);
+  },
+
+  async update(ctx, l, ml) {
+    const recipe: UpdateRecipe<MercariData> = {
+      editUrl,
+      fields: [
+        { key: 'title', label: 'Updating title', run: (page) => fillText(page, sel.title, l.title) },
+        { key: 'description', label: 'Updating description', run: (page) => fillText(page, sel.description, l.description) },
+        { key: 'price', label: 'Updating price', run: async (page) => { if (l.priceCents !== null) await fillText(page, sel.price, priceText(l.priceCents)); } },
+      ],
+      submitButton: sel.updateSubmit,
+      submitLabel: 'Update',
+      detectSaved: (page, _l, signal) => pollUntil(signal, async () => !/\/sell\/edit\//.test(new URL(page.url()).pathname)),
+    };
+    await runBrowserUpdate(ctx, mercariAdapter, l, ml, recipe);
   },
 
   async deactivate(ctx, ml) {

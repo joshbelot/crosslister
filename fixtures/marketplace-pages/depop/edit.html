@@ -1,16 +1,24 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8" /><title>Depop — Edit product (fixture)</title>
-<script src="/_shared/fixture.js"></script><script>Fixture.requireLogin('/depop/login.html');</script></head>
+<script src="/_shared/fixture.js"></script><script>Fixture.requireLogin('/depop/login.html');</script>
+<style>[hidden]{display:none!important}</style></head>
 <body>
   <nav><a href="/depop/sell.html">Profile</a></nav>
   <h1>Edit product</h1>
+  <div data-fixture-id="description"><label for="desc">Description</label><textarea id="desc" name="description">Old description</textarea></div>
+  <div data-fixture-id="price"><label for="price">Price</label><input id="price" name="priceAmount" value="1.00" /></div>
+  <button id="save" type="button" data-fixture-id="save">Save</button>
   <button id="delete" type="button" data-fixture-id="delete">Delete listing</button>
   <div id="dialog" role="dialog" aria-label="Delete this listing?" hidden><p>Delete this listing?</p>
     <button id="confirm" type="button">Delete</button><button type="button" onclick="document.getElementById('dialog').hidden = true">Cancel</button></div>
 <script>
   Fixture.applyMissing();
-  const d = document.getElementById('delete');
-  if (d) d.addEventListener('click', () => { document.getElementById('dialog').hidden = false; });
-  document.getElementById('confirm').addEventListener('click', () => { localStorage.setItem('cl-deleted', '1'); location.href = '/depop/sell.html'; });
+  const $ = (id) => document.getElementById(id);
+  if ($('save')) $('save').addEventListener('click', () => {
+    localStorage.setItem('cl-edit', JSON.stringify({ description: $('desc') && $('desc').value, price: $('price') && $('price').value }));
+    location.href = '/depop/products/vintage-levis-jeans-abc/';
+  });
+  if ($('delete')) $('delete').addEventListener('click', () => { $('dialog').hidden = false; });
+  $('confirm').addEventListener('click', () => { localStorage.setItem('cl-deleted', '1'); location.href = '/depop/sell.html'; });
 </script>
 </body></html>

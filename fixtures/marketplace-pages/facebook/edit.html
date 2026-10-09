@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Facebook Marketplace — Edit listing (fixture)</title>
+<script src="/_shared/fixture.js"></script><script>Fixture.requireLogin('/facebook/login.html');</script></head>
+<body>
+  <nav><a href="/facebook/sell.html">Marketplace</a></nav>
+  <h1>Edit listing</h1>
+  <div data-fixture-id="title"><label for="title">Title</label><input id="title" value="Old title" /></div>
+  <div data-fixture-id="price"><label for="price">Price</label><input id="price" value="1" /></div>
+  <div data-fixture-id="description"><label for="desc">Description</label><textarea id="desc">Old description</textarea></div>
+  <button id="update" type="button" data-fixture-id="update">Update</button>
+<script>
+  Fixture.applyMissing();
+  const $ = (id) => document.getElementById(id);
+  if ($('update')) $('update').addEventListener('click', () => {
+    localStorage.setItem('cl-edit', JSON.stringify({ title: $('title') && $('title').value, price: $('price') && $('price').value, description: $('desc') && $('desc').value }));
+    location.href = '/facebook/marketplace/item/1234567890123456/';
+  });
+</script>
+</body></html>

@@ -6,7 +6,7 @@ import { choosePath, chooseMany, chooseOption, click, fillText, typeahead, uploa
 import { exists } from '../../browser/locators';
 import {
   browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapColors, mapCondition,
-  pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, type BrowserRecipe, type DeactivateRecipe,
+  pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
 } from '../common';
 import type { BrowserAdapter, EffectiveListing } from '../types';
 import {
@@ -152,6 +152,21 @@ export const poshmarkAdapter: BrowserAdapter<PoshmarkData> = {
       detectPublished: (page, _l, signal) => detectByUrlOrLink(page, /\/listing\/(?:[^/]*-)?([a-f0-9]{24})/, signal, { successText: /listed|share/i }),
     };
     return runBrowserPublish(ctx, poshmarkAdapter, l, recipe);
+  },
+
+  async update(ctx, l, ml) {
+    const recipe: UpdateRecipe<PoshmarkData> = {
+      editUrl,
+      fields: [
+        { key: 'title', label: 'Updating title', run: (page) => fillText(page, sel.title, l.title) },
+        { key: 'description', label: 'Updating description', run: (page) => fillText(page, sel.description, l.description) },
+        { key: 'price', label: 'Updating price', run: async (page) => { if (l.priceCents !== null) await fillText(page, sel.listingPrice, String(poshmarkWholeDollars(l.priceCents))); } },
+      ],
+      submitButton: sel.update,
+      submitLabel: 'Update',
+      detectSaved: (page, _l, signal) => pollUntil(signal, async () => leavesEditPage(page)),
+    };
+    await runBrowserUpdate(ctx, poshmarkAdapter, l, ml, recipe);
   },
 
   async deactivate(ctx, ml) {

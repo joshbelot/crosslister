@@ -8,7 +8,7 @@ import type { CopyField, DataFieldDef, MarketplaceListing, NeedsUserRequest } fr
 import { click, pace } from '../browser/actions';
 import { exists, type LocatorSpec } from '../browser/locators';
 import type { Db } from '../db/client';
-import { upsertConnection } from '../services/connections';
+import { upsertConnection } from '../services/connectionStore';
 import type { JobContext } from '../services/jobContext';
 import { getKv } from '../services/settings';
 import type { BrowserAdapter, EffectiveListing, MarketplaceAdapter, PublishResult } from './types';
@@ -367,4 +367,57 @@ export async function runBrowserDeactivate<T>(ctx: JobContext, adapter: BrowserA
     ctx.log.warn(`Delete steps failed (${e.detail ?? e.message}); asking the user to remove it.`);
     await manual();
   }
+}
+
+
+export interface UpdateRecipe<TData> {
+  editUrl: (ml: MarketplaceListing) => string;
+  /** Title, description and price only (05 §7.5). */
+  fields: Array<{ key: string; label: string; run: (page: Page, l: EffectiveListing<TData>, ctx: JobContext) => Promise<void> }>;
+  submitButton: LocatorSpec;
+  submitLabel: string;
+  detectSaved: (page: Page, l: EffectiveListing<TData>, signal: AbortSignal) => Promise<void>;
+}
+
+/** Re-fill title, description and price on a live listing's edit page, then save (auto or by the user). */
+export async function runBrowserUpdate<TData>(
+  ctx: JobContext, adapter: BrowserAdapter<TData>, l: EffectiveListing<TData>, ml: MarketplaceListing, r: UpdateRecipe<TData>,
+): Promise<void> {
+  const N = adapter.name;
+  const url = r.editUrl(ml);
+  const page = await ctx.step('open', `Opening ${N}`, async () => {
+    const p = await ctx.page();
+    await p.goto(url, { waitUntil: 'domcontentloaded' });
+    return p;
+  });
+  await ctx.step('login', 'Checking login', () => ensureLoggedIn(ctx, adapter, page, url));
+
+  for (const [i, f] of r.fields.entries()) {
+    await ctx.tryStep(f.key, f.label, () => f.run(page, l, ctx));
+    if (i < r.fields.length - 1) await pace(ctx);
+  }
+  const missing = ctx.missingFields.length > 0;
+  const autoSubmit = ctx.prefs.autoSubmit && adapter.capabilities.autoSubmitAllowed && !missing;
+
+  if (autoSubmit) {
+    await ctx.step('submit', r.submitLabel, () => click(page, r.submitButton));
+    const controller = new AbortController();
+    ctx.signal.addEventListener('abort', () => controller.abort(), { once: true });
+    const saved = await withTimeout(r.detectSaved(page, l, controller.signal), 30_000, controller);
+    if (saved !== 'timeout') return;
+    if (ctx.signal.aborted) throw adapterError('CANCELLED', null);
+    await ctx.requestUser({
+      reason: 'review_and_submit', title: `Confirm the update on ${N}`,
+      instructions: `The app clicked “${r.submitLabel}” but couldn't confirm the result. Check the browser window and click “It's saved” once the listing shows your changes.`,
+      primaryAction: "It's saved",
+    });
+    return;
+  }
+  await ctx.requestUserUntil({
+    reason: missing ? 'fields' : 'review_and_submit',
+    title: missing ? `${N} requires your attention` : `Review and save on ${N}`,
+    instructions: (missing ? `The app couldn't fill: ${ctx.missingFields.join(', ')}. Fill them in the browser window. ` : 'The title, description and price are updated. ')
+      + `Review the listing and click “${r.submitLabel}” in the browser. The app will notice when it's saved.`,
+    missingFields: missing ? [...ctx.missingFields] : undefined, primaryAction: 'I saved it',
+  }, (signal) => r.detectSaved(page, l, signal));
 }

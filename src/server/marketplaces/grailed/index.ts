@@ -7,7 +7,7 @@ import { chooseOption, choosePath, click, fillText, typeahead, uploadFiles } fro
 import { exists } from '../../browser/locators';
 import {
   browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapCondition, pollUntil,
-  resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, type BrowserRecipe, type DeactivateRecipe,
+  resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
 } from '../common';
 import type { BrowserAdapter } from '../types';
 import {
@@ -131,6 +131,21 @@ export const grailedAdapter: BrowserAdapter<GrailedData> = {
       },
     };
     return runBrowserPublish(ctx, grailedAdapter, l, recipe);
+  },
+
+  async update(ctx, l, ml) {
+    const recipe: UpdateRecipe<GrailedData> = {
+      editUrl,
+      fields: [
+        { key: 'title', label: 'Updating title', run: (page) => fillText(page, sel.title, l.title) },
+        { key: 'description', label: 'Updating description', run: (page) => fillText(page, sel.description, l.description) },
+        { key: 'price', label: 'Updating price', run: async (page) => { if (l.priceCents !== null) await fillText(page, sel.price, (l.priceCents / 100).toFixed(0)); } },
+      ],
+      submitButton: sel.updateSubmit,
+      submitLabel: 'Save',
+      detectSaved: (page, _l, signal) => pollUntil(signal, async () => !/\/edit\/?$/.test(new URL(page.url()).pathname)),
+    };
+    await runBrowserUpdate(ctx, grailedAdapter, l, ml, recipe);
   },
 
   async deactivate(ctx, ml) {

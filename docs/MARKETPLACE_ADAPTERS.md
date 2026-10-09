@@ -75,6 +75,10 @@ Limits and known issues are added here as each adapter is built.
 - **Known limits:** fixed-price listings only (Good 'Til Cancelled); US marketplace; requires the three business policies and a ZIP code.
 - **Verification:** all HTTP is mocked in the test suite (the listing/verify/add flow, token refresh, OAuth callback). It has **not** been run against eBay production or sandbox because no keys were available.
 
+## Updating live listings
+
+When you edit the title, description or price of an item that is live on a marketplace, the editor offers **Update listings**. The app opens each listing's edit page and re-fills only those three things (photos, category and other attributes are not changed). You can also use **Update** on an item's page for one marketplace. Facebook always needs your final click.
+
 ## Calibration
 
 The selectors, labels and category trees in the adapters are best-effort knowledge of the live sites and were **not verified against them**. The tests use local HTML fixtures, which verify the app's flow logic and helpers — **not** accuracy against the real sites.

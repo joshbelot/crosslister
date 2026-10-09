@@ -9,7 +9,7 @@ import { bestMatch } from '../../browser/match';
 import { AdapterError } from '../adapterError';
 import {
   browserCommonData, browserCommonDataFields, ensureLoggedIn, hostOk, mapCondition, pollUntil, resolveUrl, runBrowserDeactivate, runBrowserPublish,
-  type BrowserRecipe, type DeactivateRecipe,
+  runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
 } from '../common';
 import { getKv } from '../../services/settings';
 import type { BrowserAdapter, EffectiveListing } from '../types';
@@ -182,6 +182,21 @@ export const facebookAdapter: BrowserAdapter<FacebookData> = {
       findAfterManualPublish,
     };
     return runBrowserPublish(ctx, facebookAdapter, l, recipe);
+  },
+
+  async update(ctx, l, ml) {
+    const recipe: UpdateRecipe<FacebookData> = {
+      editUrl: (m) => resolveUrl('facebook', 'edit', 'https://www.facebook.com/marketplace/edit/?listing_id={id}').replace('{id}', m.remoteId ?? ''),
+      fields: [
+        { key: 'title', label: 'Updating title', run: (page) => fillText(page, sel.title, l.title) },
+        { key: 'price', label: 'Updating price', run: async (page) => { if (l.priceCents !== null) await fillText(page, sel.price, String(Math.round(l.priceCents / 100))); } },
+        { key: 'description', label: 'Updating description', run: (page) => fillText(page, sel.description, l.description) },
+      ],
+      submitButton: sel.updateSubmit,
+      submitLabel: 'Update',
+      detectSaved: (page, _l, signal) => pollUntil(signal, async () => !/\/marketplace\/edit/.test(new URL(page.url()).pathname)),
+    };
+    await runBrowserUpdate(ctx, facebookAdapter, l, ml, recipe);
   },
 
   async deactivate(ctx, ml) {
