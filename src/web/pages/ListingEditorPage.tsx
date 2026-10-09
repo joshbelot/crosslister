@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { AiDescriptionButton, AiTitleButton } from '../components/AiSuggest';
 import { ChevronDown, ChevronRight, Send } from 'lucide-react';
 import { useParams, useSearchParams } from 'react-router';
 import clsx from 'clsx';
@@ -162,17 +163,25 @@ export function ListingEditorPage() {
           <div className="col-span-2">
             <div className="flex items-end justify-between">
               <label className="label" htmlFor="field-title">Title</label>
+              <span className="flex items-center gap-2">
+              <AiTitleButton ensureId={async () => { const id = await draft.ensureCreated(); await draft.flush(); return id; }} marketplaceIds={draft.selected}
+                onUse={(t) => setField('title', t)} />
               {titleLimit !== null && (
                 <span title={titleShort.length ? `Will be shortened on ${titleShort.join(', ')}` : undefined}
                   className={clsx('mb-1 text-xs', titleShort.length ? 'text-amber-600' : 'text-zinc-400')}>{values.title.length} / {titleLimit}</span>
               )}
+              </span>
             </div>
             <input id="field-title" className="input" value={values.title} placeholder="e.g. Vintage Levi's 501 Jeans 32x30" onChange={(e) => setField('title', e.target.value)} />
           </div>
           <div className="col-span-2">
             <div className="flex items-end justify-between">
               <label className="label" htmlFor="field-description">Description</label>
-              {descLimit !== null && <span className={clsx('mb-1 text-xs', values.description.length > descLimit ? 'text-red-600' : 'text-zinc-400')}>{values.description.length} / {descLimit}</span>}
+              <span className="flex items-center gap-2">
+                <AiDescriptionButton ensureId={async () => { const id = await draft.ensureCreated(); await draft.flush(); return id; }}
+                  onUse={(text, mode) => setField('description', mode === 'append' && values.description.trim() ? `${values.description.trimEnd()}\n\n${text}` : text)} />
+                {descLimit !== null && <span className={clsx('mb-1 text-xs', values.description.length > descLimit ? 'text-red-600' : 'text-zinc-400')}>{values.description.length} / {descLimit}</span>}
+              </span>
             </div>
             <textarea id="field-description" ref={descRef} className="input min-h-[120px] resize-none overflow-hidden" rows={5} value={values.description}
               onChange={(e) => setField('description', e.target.value)} />
