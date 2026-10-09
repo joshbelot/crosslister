@@ -64,3 +64,69 @@ export function AiTitleButton({ ensureId, marketplaceIds, onUse }: { ensureId: (
     </AiPopover>
   );
 }
+
+interface AttributeSuggestion {
+  brand: string | null; categoryId: string | null; colors: string[]; size: string | null; itemType: string | null;
+  evidence: { brand?: string; size?: string };
+}
+export interface AttributeApply { brand?: string; categoryId?: string; colors?: string[]; size?: string }
+
+/** "Suggest from photos" (09 §4.3): shows each value with its evidence; nothing is filled until the user applies the checked ones. */
+export function AiAttributesCard({ ensureId, photoCount, onApply }: { ensureId: () => Promise<string>; photoCount: number; onApply: (v: AttributeApply) => void }) {
+  const enabled = useAiEnabled();
+  const [state, setState] = useState<{ status: 'idle' } | { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; data: AttributeSuggestion }>({ status: 'idle' });
+  const [picked, setPicked] = useState<Record<string, boolean>>({});
+  if (!enabled || photoCount === 0) return null;
+
+  const run = async () => {
+    setState({ status: 'loading' });
+    try {
+      const data = await api.post<AttributeSuggestion>('/api/ai/attributes', { listingId: await ensureId() });
+      setPicked({ brand: true, categoryId: true, colors: true, size: true });
+      setState({ status: 'ready', data });
+    } catch (e) { setState({ status: 'error', message: e instanceof ApiError ? e.message : String(e) }); }
+  };
+  const rows = state.status === 'ready' ? ([
+    ['brand', 'Brand', state.data.brand, state.data.evidence.brand],
+    ['categoryId', 'Category', state.data.categoryId, state.data.itemType ?? undefined],
+    ['colors', 'Colors', state.data.colors.length ? state.data.colors.join(', ') : null, undefined],
+    ['size', 'Size', state.data.size, state.data.evidence.size],
+  ] as const).filter((r) => r[2]) : [];
+
+  return (
+    <div className="mt-3">
+      <button type="button" className="btn btn-secondary btn-sm" disabled={state.status === 'loading'} onClick={() => void run()}>
+        {state.status === 'loading' ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Suggest from photos
+      </button>
+      {state.status === 'error' && <p className="error-text mt-2">{state.message}</p>}
+      {state.status === 'ready' && (
+        <div className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm">
+          {rows.length === 0 ? <p>Nothing could be read clearly from the photos.</p> : (
+            <ul className="space-y-1">
+              {rows.map(([key, label, value, evidence]) => (
+                <li key={key}>
+                  <label className="flex items-start gap-2">
+                    <input type="checkbox" className="mt-1" checked={picked[key] ?? false} onChange={(e) => setPicked((p) => ({ ...p, [key]: e.target.checked }))} />
+                    <span><span className="font-medium">{label}:</span> {value}{evidence && <span className="text-xs text-zinc-500"> — {evidence}</span>}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-3 flex gap-2">
+            <button type="button" className="btn btn-primary btn-sm" disabled={rows.length === 0 || !rows.some(([k]) => picked[k])}
+              onClick={() => {
+                const d = state.data;
+                onApply({
+                  ...(picked.brand && d.brand ? { brand: d.brand } : {}), ...(picked.categoryId && d.categoryId ? { categoryId: d.categoryId } : {}),
+                  ...(picked.colors && d.colors.length ? { colors: d.colors } : {}), ...(picked.size && d.size ? { size: d.size } : {}),
+                });
+                setState({ status: 'idle' });
+              }}>Apply selected</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setState({ status: 'idle' })}>Dismiss</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

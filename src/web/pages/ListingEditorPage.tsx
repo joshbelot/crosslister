@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AiDescriptionButton, AiTitleButton } from '../components/AiSuggest';
+import { AiAttributesCard, AiDescriptionButton, AiTitleButton } from '../components/AiSuggest';
 import { ChevronDown, ChevronRight, Send } from 'lucide-react';
 import { useParams, useSearchParams } from 'react-router';
 import clsx from 'clsx';
@@ -157,6 +157,13 @@ export function ListingEditorPage() {
         <div className="card p-5">
           <PhotoManager ref={photoRef} listingId={draft.listingId} photos={listing?.photos ?? []} ensureCreated={draft.ensureCreated}
             onUploaded={() => { if (!valuesTitleRef.current) focusField('title'); }} />
+          <AiAttributesCard ensureId={async () => { const id = await draft.ensureCreated(); await draft.flush(); return id; }} photoCount={listing?.photos.length ?? 0}
+            onApply={(v) => {
+              if (v.brand) setField('brand', v.brand);
+              if (v.categoryId) setField('categoryId', v.categoryId);
+              if (v.colors) setField('colors', v.colors as never);
+              if (v.size) setField('size', v.size);
+            }} />
         </div>
 
         <div className="card grid grid-cols-2 gap-x-6 gap-y-5 p-5">

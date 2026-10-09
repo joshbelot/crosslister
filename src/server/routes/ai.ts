@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { marketplaceIdSchema } from '../../shared/schemas';
-import { suggestDescription, suggestTitles } from '../ai/features';
+import { suggestAttributes, suggestDescription, suggestTitles } from '../ai/features';
 import { getProvider } from '../ai/provider';
 import { getSettings } from '../services/settings';
 
@@ -16,4 +16,6 @@ export async function aiRoutes(app: FastifyInstance): Promise<void> {
     const b = listingBody.extend({ marketplaceIds: z.array(marketplaceIdSchema).optional() }).parse(req.body);
     return suggestTitles(app.db, b.listingId, b.marketplaceIds ?? []);
   });
+
+  app.post('/ai/attributes', async (req) => suggestAttributes(app.db, listingBody.parse(req.body).listingId));
 }

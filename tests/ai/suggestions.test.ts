@@ -81,3 +81,29 @@ describe('helpers', () => {
     expect(renderItemDetails(l)).toBe('- Title: Only title');
   });
 });
+
+describe('attributes from photos', () => {
+  it('sends photos, keeps only validated values and requires evidence for brand and size', async () => {
+    const l = await seedListing(t.app);
+    __setProviderForTest(fake([JSON.stringify({
+      brand: 'Nike', categoryId: 'men.shoes.sneakers', colors: ['Blue', 'teal', 'white', 'black'], size: '10', itemType: 'sneakers',
+      evidence: { brand: 'logo on tongue' },
+    })]));
+    const r = (await req(t.app, 'POST', '/api/ai/attributes', { listingId: l.id })).json();
+    expect(r).toEqual({ brand: 'Nike', categoryId: 'men.shoes.sneakers', colors: ['blue', 'white'], size: null, itemType: 'sneakers', evidence: { brand: 'logo on tongue' } });
+    expect(calls[0]!.images).toHaveLength(1);
+    expect(calls[0]!.prompt).toContain('men.shoes.sneakers');
+    expect(calls[0]!.prompt).toContain('Only report size if it is readable on a tag');
+  });
+  it('drops non-selectable categories and brand without evidence', async () => {
+    const l = await seedListing(t.app);
+    __setProviderForTest(fake([JSON.stringify({ brand: 'Gucci', categoryId: 'men', colors: [], size: '9', evidence: { size: 'tag in photo 2' } })]));
+    const r = (await req(t.app, 'POST', '/api/ai/attributes', { listingId: l.id })).json();
+    expect(r).toMatchObject({ brand: null, categoryId: null, colors: [], size: '9' });
+  });
+  it('needs at least one photo', async () => {
+    const l = (await req(t.app, 'POST', '/api/listings', { title: 'No photos' })).json();
+    __setProviderForTest(fake(['{}']));
+    expect((await req(t.app, 'POST', '/api/ai/attributes', { listingId: l.id })).statusCode).toBe(400);
+  });
+});

@@ -1,9 +1,13 @@
 import { z } from 'zod';
-import { categoryAncestry } from '../../shared/taxonomy';
+import { COLOR_IDS, MAX_COLORS, type ColorId } from '../../shared/colors';
+import { CATEGORIES, categoryAncestry, categoryPathLabel, isSelectableCategory } from '../../shared/taxonomy';
 import type { MarketplaceId } from '../../shared/constants';
 import type { Db } from '../db/client';
 import { getAdapter } from '../marketplaces/registry';
 import { getListing } from '../services/listings';
+import { displayPath } from '../services/imageProcessing';
+import { listPhotoRows } from '../services/photos';
+import { AppError } from '../errors';
 import { getSettings } from '../services/settings';
 import { completeJson, getProvider } from './provider';
 import { renderItemDetails, SYSTEM_PROMPT } from './prompts';
@@ -58,4 +62,55 @@ export async function suggestTitles(db: Db, listingId: string, marketplaceIds: M
   const titles = [...new Set(out.titles.map((t) => t.trim()).filter(Boolean))]
     .filter((t) => t.length <= maxLen && !inventsWords(t, allowed)).slice(0, 3);
   return { titles, maxLen };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Attributes from photos (09 §4.3)
+// ---------------------------------------------------------------------------------------------
+
+export interface AttributeSuggestion {
+  brand: string | null; categoryId: string | null; colors: ColorId[]; size: string | null; itemType: string | null;
+  evidence: { brand?: string; size?: string };
+}
+
+const attributeSchema = z.object({
+  brand: z.string().nullable().optional(),
+  categoryId: z.string().nullable().optional(),
+  colors: z.array(z.string()).optional(),
+  size: z.string().nullable().optional(),
+  itemType: z.string().nullable().optional(),
+  evidence: z.object({ brand: z.string().optional(), size: z.string().optional() }).partial().optional(),
+});
+
+const clean = (v: string | null | undefined): string | null => (v && v.trim() ? v.trim() : null);
+
+/** Server-side validation of the model's answer: only selectable categories, known colors (max 2), brand/size only with evidence. */
+export function validateAttributes(raw: z.infer<typeof attributeSchema>): AttributeSuggestion {
+  const evidence = { ...(clean(raw.evidence?.brand) ? { brand: clean(raw.evidence?.brand)! } : {}), ...(clean(raw.evidence?.size) ? { size: clean(raw.evidence?.size)! } : {}) };
+  const colors = [...new Set((raw.colors ?? []).map((c) => c.toLowerCase().trim()).filter((c): c is ColorId => (COLOR_IDS as string[]).includes(c)))].slice(0, MAX_COLORS);
+  return {
+    brand: evidence.brand ? clean(raw.brand) : null,
+    categoryId: raw.categoryId && isSelectableCategory(raw.categoryId) ? raw.categoryId : null,
+    colors,
+    size: evidence.size ? clean(raw.size) : null,
+    itemType: clean(raw.itemType),
+    evidence,
+  };
+}
+
+export async function suggestAttributes(db: Db, listingId: string): Promise<AttributeSuggestion> {
+  const l = getListing(db, listingId);
+  const photos = listPhotoRows(db, listingId).slice(0, 4);
+  if (photos.length === 0) throw new AppError('VALIDATION', 400, 'Add at least one photo first.');
+  const provider = getProvider(getSettings(db));
+  const categories = CATEGORIES.filter((c) => c.selectable).map((c) => `${c.id} = ${categoryPathLabel(c.id)}`).join('\n');
+  const raw = await completeJson(provider, {
+    system: SYSTEM_PROMPT,
+    prompt: `Known item details (may be empty):\n${renderItemDetails(l) || '(none)'}\n\nAllowed category ids:\n${categories}\n\nAllowed color ids: ${COLOR_IDS.join(', ')}\n\n`
+      + 'Identify only what you can clearly see. Return JSON {"brand": string|null, "categoryId": string|null, "colors": string[], "size": string|null, "itemType": string|null, "evidence": {"brand"?: string, "size"?: string}}. '
+      + 'Only report size if it is readable on a tag in a photo. In "evidence" say where you read the brand or size (for example "tag in photo 2").',
+    images: photos.map((p) => displayPath(p)),
+    maxTokens: 500,
+  }, attributeSchema);
+  return validateAttributes(raw);
 }
