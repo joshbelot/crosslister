@@ -105,6 +105,7 @@ export interface ListingSummary {
   primaryPhotoUrl: string | null; photoCount: number;
   marketplaces: Array<{ marketplaceId: MarketplaceId; status: MarketplaceListingStatus; url: string | null }>;
   needsAttention: boolean;
+  saleDetectedMarketplaceId: MarketplaceId | null;
   updatedAt: string; createdAt: string;
 }
 

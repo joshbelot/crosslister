@@ -185,7 +185,7 @@ export function toSummary(d: ListingDetail): ListingSummary {
     brand: d.brand, size: d.size, categoryId: d.categoryId,
     primaryPhotoUrl: primary ? primary.urls.thumb : null, photoCount: d.photos.length,
     marketplaces: d.marketplaces.map((m) => ({ marketplaceId: m.marketplaceId, status: m.status, url: m.url })),
-    needsAttention: d.needsAttention, updatedAt: d.updatedAt, createdAt: d.createdAt,
+    needsAttention: d.needsAttention, saleDetectedMarketplaceId: d.saleDetectedMarketplaceId, updatedAt: d.updatedAt, createdAt: d.createdAt,
   };
 }
 
@@ -218,6 +218,7 @@ export function listListings(db: Db, q: Partial<ListQuery> = {}): { items: Listi
       primaryPhotoUrl: primary ? primary.urls.thumb : null, photoCount: ph.length,
       marketplaces: mls.map((m) => ({ marketplaceId: m.marketplaceId, status: m.status, url: m.url })),
       needsAttention: computeNeedsAttention(listing, mls, jobsByListing.get(row.id) ?? []),
+      saleDetectedMarketplaceId: listing.saleDetectedMarketplaceId,
       updatedAt: row.updatedAt, createdAt: row.createdAt,
     };
   });

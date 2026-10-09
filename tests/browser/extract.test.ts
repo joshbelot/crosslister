@@ -15,3 +15,25 @@ describe.skipIf(!process.env.RUN_BROWSER_TESTS)('extractProduct (browser)', () =
     expect(x.images[1]).toBe(`${env.fixtureUrl}/2.jpg`);
   });
 });
+
+describe.skipIf(!process.env.RUN_BROWSER_TESTS)('browserCheckStatus (browser)', () => {
+  let env: BrowserEnv;
+  beforeAll(async () => { env = await startBrowserEnv(); });
+  afterAll(async () => { await env.close(); });
+
+  const check = async (path: string) => {
+    const { browserCheckStatus } = await import('../../src/server/marketplaces/common');
+    const { poshmarkAdapter } = await import('../../src/server/marketplaces/poshmark');
+    const ctx = { page: async () => env.page, sleep: async () => undefined } as never;
+    return browserCheckStatus(ctx, poshmarkAdapter as never, { url: `${env.fixtureUrl}${path}` } as never);
+  };
+
+  it('reads availability from structured data', async () => {
+    expect(await check('/_import/product-jsonld.html')).toBe('active');
+    expect(await check('/_import/product-graph.html')).toBe('sold');
+  });
+  it('treats a 404 as ended and an unreadable page as unknown', async () => {
+    expect(await check('/nope/missing.html')).toBe('ended');
+    expect(await check('/_helpers/helpers.html')).toBe('unknown');
+  });
+});

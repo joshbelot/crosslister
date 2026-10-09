@@ -7,6 +7,7 @@ import { exists } from '../../browser/locators';
 import {
   browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapColors, mapCondition,
   pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
+  browserCheckStatus,
 } from '../common';
 import { createBrowserImporter } from '../../importers/browserImporter';
 import type { BrowserAdapter, EffectiveListing } from '../types';
@@ -175,3 +176,4 @@ export const mercariAdapter: BrowserAdapter<MercariData> = {
 
 // Shop-page + pasted-URL import (07 §5.3). Assisted, uncalibrated.
 mercariAdapter.importer = createBrowserImporter(mercariAdapter as unknown as BrowserAdapter, { shopUrl: () => null });
+mercariAdapter.checkStatus = (ctx, ml) => browserCheckStatus(ctx, mercariAdapter as unknown as BrowserAdapter, ml);

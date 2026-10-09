@@ -7,6 +7,7 @@ import { exists } from '../../browser/locators';
 import {
   browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapColors, mapCondition,
   pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
+  browserCheckStatus,
 } from '../common';
 import { createBrowserImporter } from '../../importers/browserImporter';
 import type { BrowserAdapter } from '../types';
@@ -173,3 +174,4 @@ export const depopAdapter: BrowserAdapter<DepopData> = {
 
 // Shop-page + pasted-URL import (07 §5.3). Assisted, uncalibrated.
 depopAdapter.importer = createBrowserImporter(depopAdapter as unknown as BrowserAdapter, { shopUrl: (account) => (account ? `https://www.depop.com/${account}/` : null) });
+depopAdapter.checkStatus = (ctx, ml) => browserCheckStatus(ctx, depopAdapter as unknown as BrowserAdapter, ml);

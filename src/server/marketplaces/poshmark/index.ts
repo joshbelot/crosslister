@@ -7,6 +7,7 @@ import { exists } from '../../browser/locators';
 import {
   browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapColors, mapCondition,
   pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
+  browserCheckStatus,
 } from '../common';
 import { createBrowserImporter } from '../../importers/browserImporter';
 import type { BrowserAdapter, EffectiveListing } from '../types';
@@ -196,3 +197,4 @@ export const poshmarkAdapter: BrowserAdapter<PoshmarkData> = {
 
 // Shop-page + pasted-URL import (07 §5.3). Assisted, uncalibrated.
 poshmarkAdapter.importer = createBrowserImporter(poshmarkAdapter as unknown as BrowserAdapter, { shopUrl: (account) => (account ? `https://poshmark.com/closet/${account}` : null) });
+poshmarkAdapter.checkStatus = (ctx, ml) => browserCheckStatus(ctx, poshmarkAdapter as unknown as BrowserAdapter, ml);

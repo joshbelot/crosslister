@@ -178,13 +178,6 @@ export function ListingDetailPage() {
         </div>
       </div>
 
-      {l.saleDetectedMarketplaceId && !l.soldAt && (
-        <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <span>This item sold on {MARKETPLACE_NAMES[l.saleDetectedMarketplaceId]}. Remove it from the other marketplaces?</span>
-          <button className="btn btn-primary btn-sm" onClick={() => setSoldOpen(true)}>Review</button>
-        </div>
-      )}
-
       <div className="mt-6 grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-6">
         <section aria-label="Photos">
           {photo ? (

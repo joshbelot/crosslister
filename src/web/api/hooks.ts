@@ -197,3 +197,6 @@ export const useSaveSettings = () =>
 
 export const useSaveCategoryMap = () =>
   useApiMutation(({ mp, map }: { mp: MarketplaceId; map: Record<string, string> }) => api.put<{ map: Record<string, string> }>(`/api/settings/category-map/${mp}`, { map }), (qc, a) => { void qc.invalidateQueries({ queryKey: ['category-map', a.mp] }); });
+
+export const useRunStatusChecks = () =>
+  useApiMutation(() => api.post<{ jobs: Job[]; count: number }>('/api/status-checks/run'), (qc) => { void qc.invalidateQueries({ queryKey: ['jobs'] }); });

@@ -11,7 +11,8 @@ import type { Db } from '../db/client';
 import { upsertConnection } from '../services/connectionStore';
 import type { JobContext } from '../services/jobContext';
 import { getKv } from '../services/settings';
-import type { BrowserAdapter, EffectiveListing, MarketplaceAdapter, PublishResult } from './types';
+import { extractProduct } from '../browser/extract';
+import type { BrowserAdapter, EffectiveListing, MarketplaceAdapter, PublishResult, RemoteStatus } from './types';
 
 export * from './adapterError';
 import { AdapterError, adapterError, toAdapterError } from './adapterError';
@@ -420,4 +421,22 @@ export async function runBrowserUpdate<TData>(
       + `Review the listing and click “${r.submitLabel}” in the browser. The app will notice when it's saved.`,
     missingFields: missing ? [...ctx.missingFields] : undefined, primaryAction: 'I saved it',
   }, (signal) => r.detectSaved(page, l, signal));
+}
+
+/** Browser status check (08 §3): read the item page without ever logging in; a login wall means `unknown`. */
+export async function browserCheckStatus<T>(ctx: JobContext, adapter: BrowserAdapter<T>, ml: MarketplaceListing): Promise<RemoteStatus> {
+  if (!ml.url) return 'unknown';
+  const page = await ctx.page();
+  const resp = await page.goto(ml.url, { waitUntil: 'domcontentloaded' });
+  await ctx.sleep(process.env.CROSSLISTER_IMPORT_DELAY_MS === '0' ? 0 : 2000);
+  if (adapter.auth.loginUrlPattern.test(page.url())) return 'unknown';
+  if (resp && resp.status() === 404) return 'ended';
+  const found = (await extractProduct(page)).availability;
+  if (found) return found;
+  const sold = adapter.soldIndicator ?? { what: 'sold badge', candidates: [{ text: /^sold$/i }] };
+  if (await exists(page, sold, 1000)) return 'sold';
+  const title = await page.title().catch(() => '');
+  const body = (await page.locator('body').innerText({ timeout: 2000 }).catch(() => '')).slice(0, 4000);
+  if (/not found|no longer available|removed/i.test(`${title}\n${body}`)) return 'ended';
+  return 'unknown';
 }

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Copy, Download, ImageOff, Pencil, Plus, Search, Send } from 'lucide-react';
+import { Copy, Download, ImageOff, MoreHorizontal, Pencil, Plus, Search, Send } from 'lucide-react';
+import { toast } from 'sonner';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import clsx from 'clsx';
 import { INVENTORY_FILTERS, type InventoryFilter } from '../../shared/constants';
-import { useDuplicateListing, useListings } from '../api/hooks';
+import { useDuplicateListing, useListings, useRunStatusChecks } from '../api/hooks';
 import { MarketplaceBadge } from '../components/MarketplaceBadge';
 import { StatusPill } from '../components/StatusPill';
 import { formatCentsShort } from '../lib/format';
@@ -27,6 +28,8 @@ export function InventoryPage() {
   const [highlight, setHighlight] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const duplicate = useDuplicateListing();
+  const runChecks = useRunStatusChecks();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -67,6 +70,17 @@ export function InventoryPage() {
         <select className="input w-52" value={sort} onChange={(e) => setParam('sort', e.target.value)} aria-label="Sort">
           {SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <div className="relative">
+          <button className="btn btn-secondary px-3" aria-label="More actions" aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}><MoreHorizontal size={16} /></button>
+          {menuOpen && (
+            <div role="menu" className="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
+              <button role="menuitem" className="block w-full px-3 py-2 text-left text-sm hover:bg-zinc-50" disabled={runChecks.isPending}
+                onClick={() => { setMenuOpen(false); runChecks.mutate(undefined, { onSuccess: (r) => toast(r.count ? `Checking ${r.count} listing${r.count === 1 ? '' : 's'}…` : 'Nothing to check right now.') }); }}>
+                Check listing statuses
+              </button>
+            </div>
+          )}
+        </div>
         <Link to="/import" className="btn btn-secondary"><Download size={16} /> Import</Link>
         <Link to="/listings/new/edit" className="btn btn-primary"><Plus size={16} /> New Listing</Link>
       </div>
