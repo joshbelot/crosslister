@@ -47,11 +47,26 @@ After you confirm, the **Activity** panel shows progress per marketplace. When t
 
 ## Import existing listings
 
-Use the **Import** page to bring in what you already have: from eBay via the API, from a shop page, or from a list of listing URLs. Imported items are shown for review (with duplicate detection) before anything is added to your inventory.
+Use the **Import** page to bring in what you already have:
+
+- **eBay** — reads your active listings through eBay's API.
+- **Mercari, Poshmark, Depop, Grailed** — scans your shop page in the browser window (you may be asked to open your listings page), or reads pasted listing URLs.
+- **Facebook, Vinted, OfferUp, Etsy, other sites** — paste listing URLs; the app reads the page's structured data (title, price, photos, …).
+- **Backup** — restore from a Crosslister backup (ZIP or JSON).
+
+Nothing is added until you review it. Each item shows the photos and the fields the app found (fix anything wrong), and possible duplicates of items you already have — you choose **Import as new**, **Merge into this item** or **Skip**. The app never merges on its own.
 
 ## Mark sold and remove elsewhere
 
 On an item's page, **Mark Sold** records the sale and offers to remove the item from the other marketplaces; each removal shows up in Activity. **Deactivate Everywhere** removes it without marking it sold.
+
+## Sales detection
+
+**Inventory → ⋯ → Check listing statuses** looks at your live listings (browser marketplaces are only checked when you ask). If an item sold somewhere, a banner offers to mark it sold and remove it elsewhere — nothing happens automatically. For eBay you can also turn on automatic checks in **Settings → eBay**.
+
+## Optional: AI suggestions
+
+Turn on AI in **Settings → AI** (a local model through Ollama is free; see [docs/SETUP.md](docs/SETUP.md)). Then ✨ **Suggest** buttons appear next to Title and Description, under the photos, and in **Customize per marketplace**. Suggestions are only shown for review; nothing is applied until you click **Use**.
 
 ## Back up your data
 

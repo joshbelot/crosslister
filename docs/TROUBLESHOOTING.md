@@ -26,8 +26,14 @@ Each entry is *symptom → cause → fix*.
 
 **eBay errors.** → "Policies missing": create business policies in Seller Hub and select them in Settings → eBay. `invalid_grant`: your eBay connection expired — **Connect** again. "Item specifics required": fill the required aspects under **Customize per marketplace → eBay**.
 
-**Restoring a backup.** → Quit Crosslister, move the current `data/` folder aside, create a new `data/` folder, unzip the backup into it, and start Crosslister (previews regenerate automatically). To merge a backup into your current inventory instead, use **Import → Restore from export JSON**.
+**Restoring a backup.** → Quit Crosslister, move the current `data/` folder aside, create a new `data/` folder, unzip the backup into it, and start Crosslister (previews regenerate automatically). To merge a backup into your current inventory instead, use **Import → Backup** (accepts the backup ZIP or an export JSON).
 
 **Where are the logs?** → The **Logs** page (filter by marketplace or search), or the daily files in `logs/`. **Settings → About → Open in Finder** opens the folder.
 
 **Resetting a marketplace session.** → Settings → Marketplaces → **Disconnect** (deletes the saved login), then **Connect** again.
+
+**A scan found nothing, or an import says it couldn't read the page.** → The marketplace's page looks different from what the app expects, or you weren't on your listings page when you clicked Continue. → Open your shop/closet page in the browser window and retry; for other sites paste the listing URLs instead. Pages without structured data (title, price, photos) can't be read.
+
+**"AI is turned off in Settings." / "The AI model didn't respond".** → AI is disabled, or the model server isn't running. → Settings → AI → **Test connection**. For Ollama, run `ollama serve` and `ollama pull gemma3:4b`.
+
+**A sale was detected but nothing else changed.** → By design: the banner only offers to mark the item sold. Click **Review** to mark it sold and choose where to remove it.

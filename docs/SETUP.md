@@ -60,7 +60,9 @@ brew install ollama
 ollama pull gemma3:4b
 ```
 
-Then enable AI in **Settings → AI**. Suggestions are never applied without your review.
+Then enable AI in **Settings → AI** and press **Test connection**. Suggestions are never applied without your review.
+
+Other providers: an *OpenAI-compatible server* such as LM Studio (set the server address; put `OPENAI_COMPATIBLE_API_KEY` in `.env` only if it needs one), or *Anthropic* (a paid API — set `ANTHROPIC_API_KEY` in `.env` and type the model name from Anthropic's documentation).
 
 ## Calibrating marketplaces
 

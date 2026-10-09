@@ -79,6 +79,14 @@ Limits and known issues are added here as each adapter is built.
 
 When you edit the title, description or price of an item that is live on a marketplace, the editor offers **Update listings**. The app opens each listing's edit page and re-fills only those three things (photos, category and other attributes are not changed). You can also use **Update** on an item's page for one marketplace. Facebook always needs your final click.
 
+## Importing and status checks
+
+- **eBay:** import scans `GetMyeBaySelling` and reads `GetItem`; status checks use the API (one `SoldList` call per poll when more than 5 listings are active).
+- **Mercari, Poshmark, Depop, Grailed:** import scans your shop page by collecting links that match the adapter's `listingPathRegex` while scrolling, then reads each listing page through JSON-LD / OpenGraph (`browser/extract.ts`). Poshmark and Depop open `/closet/<account>` and `/<account>/` when the account name is known; otherwise (and for Mercari and Grailed) you're asked to open your listings page. Status checks open the listing URL and never log in on their own.
+- **Facebook and manual marketplaces:** import by pasted URLs only; no status checks.
+
+These flows are tested against fixture pages only (**assisted, uncalibrated**). If a shop scan finds nothing, check `listingPathRegex` in `mapping.ts`; for fields that are missing after import, add an `extractExtra` function to the adapter's importer.
+
 ## Calibration
 
 The selectors, labels and category trees in the adapters are best-effort knowledge of the live sites and were **not verified against them**. The tests use local HTML fixtures, which verify the app's flow logic and helpers — **not** accuracy against the real sites.
