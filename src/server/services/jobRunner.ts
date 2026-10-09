@@ -28,6 +28,11 @@ export type JobHandler = (ctx: JobContext, job: Job, adapter: MarketplaceAdapter
 const handlers = new Map<JobType, JobHandler>();
 export function registerJobHandler(type: JobType, fn: JobHandler): void { handlers.set(type, fn); }
 
+/** Minute-level hooks (e.g. eBay polling). Run only while the runner is started; failures are logged, never thrown. */
+const ticks: Array<(db: Db) => Promise<void> | void> = [];
+export function registerTick(fn: (db: Db) => Promise<void> | void): void { ticks.push(fn); }
+let tickTimer: NodeJS.Timeout | null = null;
+
 interface Running { controller: AbortController; marketplaceKey: string; promise: Promise<void> }
 const running = new Map<string, Running>();
 
@@ -164,6 +169,13 @@ export const jobRunner = {
     if (timer) clearInterval(timer);
     timer = setInterval(() => { pump(db); }, 5000);
     timer.unref();
+    if (tickTimer) clearInterval(tickTimer);
+    tickTimer = setInterval(() => {
+      for (const fn of ticks) {
+        Promise.resolve().then(() => fn(db)).catch((err) => logger.warn('JOBS', `Scheduled task failed: ${(err as Error).message}`));
+      }
+    }, 60_000);
+    tickTimer.unref();
     pump(db);
   },
   kick(): void {
@@ -173,6 +185,8 @@ export const jobRunner = {
     started = false;
     if (timer) clearInterval(timer);
     timer = null;
+    if (tickTimer) clearInterval(tickTimer);
+    tickTimer = null;
     for (const r of running.values()) r.controller.abort();
     await Promise.allSettled([...running.values()].map((r) => r.promise));
   },

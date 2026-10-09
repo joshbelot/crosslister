@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle } from 'lucide-react';
 import { api } from '../../api/client';
 import { useMarketplaces } from '../../api/hooks';
 import { ConnectionControls } from './ConnectionControls';
+import { Toggle } from './Toggle';
 import type { SettingsDraft } from './useSettingsDraft';
 
 interface Policies { fulfillment: Array<{ id: string; name: string }>; payment: Array<{ id: string; name: string }>; return: Array<{ id: string; name: string }> }
@@ -69,6 +70,19 @@ export function EbayTab({ s }: { s: SettingsDraft }) {
           <div><label className="label" htmlFor="ebay-dispatch">Handling time (days)</label>
             <input id="ebay-dispatch" type="number" min={0} max={30} className="input" value={e.dispatchTimeDays} onChange={(ev) => set({ dispatchTimeDays: Math.min(30, Math.max(0, Math.round(Number(ev.target.value)) || 0)) })} /></div>
         </div>
+      </section>
+      <section className="card p-4">
+        <h3 className="mb-2 font-semibold">5. Sale detection</h3>
+        <label className="flex items-center gap-3 text-sm">
+          <Toggle checked={d.statusChecks.ebayPollingEnabled} label="Check eBay for sales automatically"
+            onChange={(v) => s.update((x) => { x.statusChecks.ebayPollingEnabled = v; return x; })} /> Check eBay for sales automatically
+        </label>
+        <div className="mt-3 w-48">
+          <label className="label" htmlFor="ebay-interval">Every (minutes)</label>
+          <input id="ebay-interval" type="number" min={15} max={1440} className="input" disabled={!d.statusChecks.ebayPollingEnabled} value={d.statusChecks.ebayIntervalMinutes}
+            onChange={(ev) => s.update((x) => { x.statusChecks.ebayIntervalMinutes = Math.min(1440, Math.max(15, Math.round(Number(ev.target.value)) || 30)); return x; })} />
+        </div>
+        <p className="help">Only eBay is checked on a timer. Other marketplaces are checked when you choose “Check listing statuses” in Inventory. Sales are never marked automatically.</p>
       </section>
     </div>
   );

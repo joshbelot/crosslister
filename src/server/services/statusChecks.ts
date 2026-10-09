@@ -7,11 +7,14 @@ import { notFound } from '../errors';
 import { getAdapter } from '../marketplaces/registry';
 import type { RemoteStatus } from '../marketplaces/types';
 import { events } from './events';
-import { registerJobHandler } from './jobRunner';
+import { registerJobHandler, registerTick } from './jobRunner';
 import { createJob } from './jobs';
 import { logger } from './logger';
 import { rowToMarketplaceListing } from './mappers';
 import { recomputeListingStatus } from './listingStatus';
+import { getKv, getSettings, setKv } from './settings';
+import { hasUserToken } from '../marketplaces/ebay/auth';
+import { tradingCall } from '../marketplaces/ebay/trading';
 import { notifyUser } from './notify';
 
 const nowIso = () => new Date().toISOString();
@@ -76,3 +79,47 @@ export function createStatusChecks(db: Db, opts: { listingId?: string; marketpla
   }
   return created;
 }
+
+// ---------------------------------------------------------------------------------------------
+// eBay polling (08 §4). Browser marketplaces are never polled on a timer.
+// ---------------------------------------------------------------------------------------------
+
+const LAST_POLL_KEY = 'ebay_last_poll';
+
+/** One poll: individual checks for a handful of listings, or a single SoldList call when more than 5 are active. */
+export async function pollEbay(db: Db, now = Date.now()): Promise<{ ran: boolean; jobs: number; sold: number }> {
+  const s = getSettings(db).statusChecks;
+  if (!s.ebayPollingEnabled) return { ran: false, jobs: 0, sold: 0 };
+  const last = getKv<number>(db, LAST_POLL_KEY, 0);
+  if (now - last < s.ebayIntervalMinutes * 60_000) return { ran: false, jobs: 0, sold: 0 };
+  const active = db.select().from(marketplaceListings)
+    .where(and(eq(marketplaceListings.marketplaceId, 'ebay'), eq(marketplaceListings.status, 'active'))).all();
+  if (active.length === 0) return { ran: false, jobs: 0, sold: 0 };
+  const pending = db.select().from(jobs).where(and(eq(jobs.type, 'status_check'), eq(jobs.marketplaceId, 'ebay'), inArray(jobs.state, ['NOT_STARTED', 'IN_PROGRESS']))).all();
+  if (pending.length > 0 || !(await hasUserToken())) return { ran: false, jobs: 0, sold: 0 };
+  setKv(db, LAST_POLL_KEY, now);
+
+  if (active.length <= 5) {
+    return { ran: true, jobs: createStatusChecks(db, { marketplaceIds: ['ebay'] }).length, sold: 0 };
+  }
+  type Res = { SoldList?: { OrderTransactionArray?: { OrderTransaction?: unknown } } };
+  const res = await tradingCall<Res>('GetMyeBaySelling', '<SoldList><Include>true</Include><DurationInDays>7</DurationInDays></SoldList>');
+  const soldIds = new Set<string>();
+  const collect = (node: unknown): void => {
+    if (Array.isArray(node)) node.forEach(collect);
+    else if (node && typeof node === 'object') {
+      const o = node as Record<string, unknown>;
+      if (o.ItemID !== undefined) soldIds.add(String(o.ItemID));
+      for (const v of Object.values(o)) collect(v);
+    }
+  };
+  collect(res.SoldList);
+  let sold = 0;
+  for (const row of active) {
+    if (row.remoteId && soldIds.has(row.remoteId)) { applyRemoteStatus(db, rowToMarketplaceListing(row), 'sold'); sold++; }
+  }
+  logger.info('STATUS', `eBay poll: ${sold} sold of ${active.length} active`);
+  return { ran: true, jobs: 0, sold };
+}
+
+registerTick((db) => { void pollEbay(db); });
