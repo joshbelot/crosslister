@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><ReviseFixedPriceItemResponse xmlns="urn:ebay:apis:eBLBaseComponents"><Ack>PartialFailure</Ack><Errors><ShortMessage>Heads up.</ShortMessage><LongMessage>This is only a warning.</LongMessage><ErrorCode>10</ErrorCode><SeverityCode>Warning</SeverityCode></Errors></ReviseFixedPriceItemResponse>

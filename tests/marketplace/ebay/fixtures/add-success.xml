@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><AddFixedPriceItemResponse xmlns="urn:ebay:apis:eBLBaseComponents"><Timestamp>2026-10-08T12:00:00.000Z</Timestamp><Ack>Success</Ack><ItemID>110123456789</ItemID><Fees><Fee><Name>ListingFee</Name><Fee currencyID="USD">0.35</Fee></Fee><Fee><Name>InsertionFee</Name><Fee currencyID="USD">0.0</Fee></Fee></Fees></AddFixedPriceItemResponse>

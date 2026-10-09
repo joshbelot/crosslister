@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Mercari — Sell (fixture)</title>
+<script src="/_shared/fixture.js"></script>
+<style>body{font-family:sans-serif;padding:12px} .row{margin:8px 0} ul[role=listbox],ul[role=menu]{border:1px solid #999;list-style:none;padding:4px;background:#fff} [hidden]{display:none!important} li{cursor:pointer;padding:2px 6px}</style>
+<script>Fixture.requireLogin('/mercari/login.html');</script>
+</head>
+<body>
+  <nav><a href="/mercari/sell.html">My page</a></nav>
+  <h1>List an item</h1>
+
+  <div class="row" data-fixture-id="photos"><input type="file" id="photos" multiple accept="image/*" style="display:none" /><div id="previews"></div></div>
+  <div class="row" data-fixture-id="title"><label for="title">Title</label><input id="title" /></div>
+  <div class="row" data-fixture-id="description"><label for="desc">Description</label><textarea id="desc"></textarea></div>
+  <div class="row" data-fixture-id="category"><button id="category" type="button">Category</button><ul id="category-menu" role="menu" hidden></ul></div>
+  <div class="row" data-fixture-id="brand"><label for="brand">Brand</label><input id="brand" autocomplete="off" /><ul id="brand-list"></ul></div>
+  <div class="row" data-fixture-id="condition"><div role="radiogroup" aria-label="Condition" id="condition">
+    <button type="button" role="radio" aria-checked="false">New</button><button type="button" role="radio" aria-checked="false">Like new</button>
+    <button type="button" role="radio" aria-checked="false">Good</button><button type="button" role="radio" aria-checked="false">Fair</button>
+    <button type="button" role="radio" aria-checked="false">Poor</button></div></div>
+  <div class="row" data-fixture-id="size"><button id="size" type="button">Size</button><ul id="size-list" role="listbox" hidden>
+    <li role="option">XS</li><li role="option">S</li><li role="option">M</li><li role="option">L</li><li role="option">XL</li><li role="option">28</li><li role="option">30</li><li role="option">32</li><li role="option">34</li><li role="option">9</li><li role="option">10</li><li role="option">10.5</li></ul></div>
+  <div class="row" data-fixture-id="color"><button id="color" type="button">Color</button><ul id="color-list" role="listbox" hidden>
+    <li role="option">Black</li><li role="option">White</li><li role="option">Gray</li><li role="option">Beige</li><li role="option">Brown</li><li role="option">Blue</li><li role="option">Red</li><li role="option">Green</li></ul></div>
+  <div class="row" data-fixture-id="weight"><label for="lb">Weight (lb)</label><input id="lb" /><label for="oz">Weight (oz)</label><input id="oz" /></div>
+  <div class="row" data-fixture-id="payer"><div role="radiogroup" aria-label="Who pays shipping" id="payer"><button type="button" role="radio" aria-checked="false">Buyer</button><button type="button" role="radio" aria-checked="false">I'll pay</button></div></div>
+  <div class="row" data-fixture-id="price"><label for="price">Price</label><input id="price" />
+    <button id="smart" type="button" role="switch" aria-checked="true" aria-label="Smart pricing">Smart pricing</button></div>
+
+  <button id="list" type="button" data-fixture-id="submit">List</button>
+
+<script>
+  Fixture.applyMissing();
+  const $ = (id) => document.getElementById(id);
+  const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
+  if ($('photos')) Fixture.uploads($('photos'), $('previews'), 'photos');
+  on('title', 'input', (e) => Fixture.record('title', e.target.value));
+  on('desc', 'input', (e) => Fixture.record('description', e.target.value));
+  if ($('category')) Fixture.menu($('category'), $('category-menu'), {
+    Women: { Tops: ['T-shirts', 'Sweaters'], Shoes: ['Sneakers', 'Boots'], Jeans: null, Dresses: null, Bags: ['Handbags'] },
+    Men: { Tops: ['T-shirts', 'Shirts', 'Sweaters'], Shoes: ['Sneakers', 'Boots', 'Dress shoes'], Jeans: null, Pants: null, 'Coats & jackets': null },
+    Electronics: { 'Video games & consoles': null },
+    Other: ['Other'],
+  }, 'category');
+  if ($('brand')) Fixture.typeahead($('brand'), $('brand-list'), ['Nike', 'Adidas', "Levi's", 'Patagonia', 'New Balance'], 'brand');
+  if ($('condition')) Fixture.radios($('condition'), 'condition');
+  if ($('size')) Fixture.dropdown($('size'), $('size-list'), 'size');
+  if ($('color')) Fixture.dropdown($('color'), $('color-list'), 'color');
+  on('lb', 'input', (e) => Fixture.record('weightLb', e.target.value));
+  on('oz', 'input', (e) => Fixture.record('weightOz', e.target.value));
+  if ($('payer')) Fixture.radios($('payer'), 'shippingPayer');
+  on('price', 'input', (e) => Fixture.record('price', e.target.value));
+  on('smart', 'click', (e) => { const b = e.currentTarget; b.setAttribute('aria-checked', b.getAttribute('aria-checked') === 'true' ? 'false' : 'true'); });
+  on('list', 'click', () => {
+    Fixture.record('smartPricing', $('smart') ? $('smart').getAttribute('aria-checked') : null);
+    Fixture.saveFilled();
+    location.href = '/mercari/us/item/m12345678901/';
+  });
+</script>
+</body></html>

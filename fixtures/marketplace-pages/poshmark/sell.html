@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Poshmark — Create listing (fixture)</title>
+<script src="/_shared/fixture.js"></script>
+<style>body{font-family:sans-serif;padding:12px} .row{margin:8px 0} ul[role=listbox],ul[role=menu]{border:1px solid #999;list-style:none;padding:4px;background:#fff} [hidden]{display:none!important} li{cursor:pointer;padding:2px 6px}</style>
+<script>Fixture.requireLogin('/poshmark/login.html');</script></head>
+<body>
+  <nav><a href="/closet/tester">My Closet</a></nav>
+  <h1>Create listing</h1>
+  <div id="form">
+    <div class="row" data-fixture-id="photos"><input type="file" id="photos" multiple accept="image/*" style="display:none" /><div id="previews"></div></div>
+    <div class="row" data-fixture-id="title"><input id="title" placeholder="What are you selling? (required)" /></div>
+    <div class="row" data-fixture-id="description"><textarea id="desc" placeholder="Describe it! (required)"></textarea></div>
+    <div class="row" data-fixture-id="category"><div id="category" role="button" tabindex="0">Select Category</div><ul id="category-menu" role="menu" hidden></ul></div>
+    <div class="row" data-fixture-id="size"><div id="size" role="button" tabindex="0">Select Size</div><ul id="size-list" role="listbox" hidden>
+      <li role="option">XS</li><li role="option">S</li><li role="option">M</li><li role="option">L</li><li role="option">XL</li><li role="option">28</li><li role="option">30</li><li role="option">32</li><li role="option">34</li><li role="option">9</li><li role="option">10</li><li role="option">10.5</li></ul></div>
+    <div class="row" data-fixture-id="condition"><button id="condition" type="button">Condition</button><ul id="condition-list" role="listbox" hidden>
+      <li role="option">New With Tags</li><li role="option">New Without Tags</li><li role="option">Like New</li><li role="option">Good</li><li role="option">Fair</li><li role="option">Poor</li></ul></div>
+    <div class="row" data-fixture-id="brand"><input id="brand" placeholder="Enter the Brand/Designer" autocomplete="off" /><ul id="brand-list"></ul></div>
+    <div class="row" data-fixture-id="colors"><button id="colors" type="button">Color</button><ul id="colors-list" role="listbox" hidden>
+      <li role="option">Black</li><li role="option">White</li><li role="option">Blue</li><li role="option">Red</li><li role="option">Tan</li><li role="option">Cream</li>
+      <li><button id="colors-done" type="button">Done</button></li></ul></div>
+    <div class="row" data-fixture-id="styleTags"><input id="tags" placeholder="Style Tag" /></div>
+    <div class="row" data-fixture-id="originalPrice"><label for="orig">Original Price</label><input id="orig" /></div>
+    <div class="row" data-fixture-id="listingPrice"><label for="price">Listing Price</label><input id="price" /></div>
+    <button id="next" type="button" data-fixture-id="next">Next</button>
+  </div>
+  <div id="review" hidden><h2>Review</h2><button id="list" type="button">List this item</button></div>
+<script>
+  Fixture.applyMissing();
+  const $ = (id) => document.getElementById(id);
+  const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
+  if ($('photos')) Fixture.uploads($('photos'), $('previews'), 'photos', 'listing-editor__image');
+  on('title', 'input', (e) => Fixture.record('title', e.target.value));
+  on('desc', 'input', (e) => Fixture.record('description', e.target.value));
+  if ($('category')) Fixture.menu($('category'), $('category-menu'), {
+    Women: { Tops: ['Tees - Short Sleeve', 'Blouses', 'Tank Tops'], Jeans: null, Sweaters: null, 'Jackets & Coats': null, Shoes: ['Sneakers', 'Boots'], Dresses: null },
+    Men: { Shirts: ['Tees - Short Sleeve', 'Polos', 'Casual Button Down Shirts'], Jeans: null, Pants: null, Shorts: null, Sweaters: null, 'Jackets & Coats': null, Shoes: ['Sneakers', 'Boots'] },
+    Home: null, Electronics: null,
+  }, 'category');
+  if ($('size')) Fixture.dropdown($('size'), $('size-list'), 'size');
+  if ($('condition')) Fixture.dropdown($('condition'), $('condition-list'), 'condition');
+  if ($('brand')) Fixture.typeahead($('brand'), $('brand-list'), ['Nike', 'Adidas', "Levi's", 'Patagonia'], 'brand');
+  Fixture.record('colors', []);
+  if ($('colors')) {
+    $('colors').addEventListener('click', () => { $('colors-list').hidden = false; });
+    $('colors-list').querySelectorAll('li[role=option]').forEach((li) => li.addEventListener('click', () => {
+      const name = li.textContent.trim(); const a = window.__filled.colors; const i = a.indexOf(name); if (i === -1) a.push(name); else a.splice(i, 1);
+    }));
+    $('colors-done').addEventListener('click', () => { $('colors-list').hidden = true; });
+  }
+  Fixture.record('styleTags', []);
+  on('tags', 'keydown', (e) => { if (e.key === 'Enter') { window.__filled.styleTags.push(e.target.value); e.target.value = ''; } });
+  on('orig', 'input', (e) => Fixture.record('originalPrice', e.target.value));
+  on('price', 'input', (e) => Fixture.record('listingPrice', e.target.value));
+  on('next', 'click', () => { $('form').hidden = true; $('review').hidden = false; });
+  on('list', 'click', () => { Fixture.saveFilled(); location.href = '/poshmark/listing/vintage-levis-jeans-0123456789abcdef01234567'; });
+</script>
+</body></html>

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Facebook Marketplace — Your listings (fixture)</title></head>
+<body>
+  <nav><a href="/facebook/sell.html">Marketplace</a></nav>
+  <h1>Your listings</h1>
+  <ul id="cards"></ul>
+<script>
+  const filled = JSON.parse(localStorage.getItem('cl-filled') || '{}');
+  if (!new URLSearchParams(location.search).get('deleted')) {
+    const li = document.createElement('li'); li.setAttribute('role', 'listitem');
+    li.innerHTML = '<a href="/facebook/marketplace/item/1234567890123456/">View</a> <span></span>';
+    li.querySelector('span').textContent = (filled.title || '') + ' $' + (filled.price || '');
+    document.getElementById('cards').appendChild(li);
+    const other = document.createElement('li'); other.setAttribute('role', 'listitem');
+    other.innerHTML = '<a href="/facebook/marketplace/item/9999999999999999/">View</a> <span>Some unrelated sofa $50</span>';
+    document.getElementById('cards').appendChild(other);
+  }
+</script>
+</body></html>

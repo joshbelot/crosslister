@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Mercari — Edit (fixture)</title>
+<script src="/_shared/fixture.js"></script>
+<script>Fixture.requireLogin('/mercari/login.html');</script>
+<style>[hidden]{display:none!important}</style></head>
+<body>
+  <nav><a href="/mercari/sell.html">My page</a></nav>
+  <h1>Edit listing</h1>
+  <div id="status"></div>
+  <div data-fixture-id="title"><label for="title">Title</label><input id="title" value="Old title" /></div>
+  <div data-fixture-id="description"><label for="desc">Description</label><textarea id="desc">Old description</textarea></div>
+  <div data-fixture-id="price"><label for="price">Price</label><input id="price" value="1.00" /></div>
+  <button id="update" type="button" data-fixture-id="update">Update</button>
+  <button id="deactivate" type="button" data-fixture-id="deactivate">Deactivate</button>
+  <div id="dialog" role="dialog" aria-label="Deactivate listing" hidden>
+    <p>Deactivate this listing?</p>
+    <button id="confirm" type="button">Deactivate</button><button type="button" onclick="document.getElementById('dialog').hidden = true">Cancel</button>
+  </div>
+<script>
+  Fixture.applyMissing();
+  const $ = (id) => document.getElementById(id);
+  if ($('update')) $('update').addEventListener('click', () => {
+    localStorage.setItem('cl-edit', JSON.stringify({ title: $('title') && $('title').value, description: $('desc') && $('desc').value, price: $('price') && $('price').value }));
+    location.href = '/mercari/us/item/m12345678901/';
+  });
+  const d = $('deactivate');
+  if (d) d.addEventListener('click', () => { $('dialog').hidden = false; });
+  $('confirm').addEventListener('click', () => {
+    localStorage.setItem('cl-deactivated', '1');
+    $('dialog').hidden = true;
+    if (d) d.remove();
+    $('status').textContent = 'This listing has been deactivated.';
+  });
+</script>
+</body></html>

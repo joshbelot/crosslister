@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Grailed — Edit listing (fixture)</title>
+<script src="/_shared/fixture.js"></script><script>Fixture.requireLogin('/grailed/login.html');</script>
+<style>[hidden]{display:none!important}</style></head>
+<body>
+  <nav><a href="/grailed/sell.html">My Items</a></nav>
+  <h1>Edit listing</h1>
+  <div data-fixture-id="title"><label for="title">Item name</label><input id="title" value="Old title" /></div>
+  <div data-fixture-id="description"><label for="desc">Description</label><textarea id="desc">Old description</textarea></div>
+  <div data-fixture-id="price"><label for="price">Price</label><input id="price" value="1" /></div>
+  <button id="save" type="button" data-fixture-id="save">Save</button>
+  <button id="delete" type="button" data-fixture-id="delete">Delete listing</button>
+  <div id="dialog" role="dialog" aria-label="Delete listing?" hidden><p>Delete this listing?</p>
+    <button id="confirm" type="button">Delete</button><button type="button" onclick="document.getElementById('dialog').hidden = true">Cancel</button></div>
+<script>
+  Fixture.applyMissing();
+  const $ = (id) => document.getElementById(id);
+  if ($('save')) $('save').addEventListener('click', () => {
+    localStorage.setItem('cl-edit', JSON.stringify({ title: $('title') && $('title').value, description: $('desc') && $('desc').value, price: $('price') && $('price').value }));
+    location.href = '/grailed/listings/1234567-vintage-levis-jeans';
+  });
+  if ($('delete')) $('delete').addEventListener('click', () => { $('dialog').hidden = false; });
+  $('confirm').addEventListener('click', () => { localStorage.setItem('cl-deleted', '1'); location.href = '/grailed/sell.html'; });
+</script>
+</body></html>

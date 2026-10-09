@@ -1,27 +1,84 @@
 # Crosslister
 
-A free, self-hosted crosslisting app for one person: create a listing once (photos, title, price, condition, brand, category, size), then publish it to Mercari, Poshmark, Depop, Facebook Marketplace, eBay, Grailed and more. Runs locally on a Mac — no cloud, no subscription.
+A free, self-hosted crosslisting app for one person: create a listing once (photos, title, price, condition, brand, category, size), then publish it to Mercari, Poshmark, Depop, Facebook Marketplace, eBay, Grailed and more. It runs on your own Mac — no cloud, no subscription, and your inventory lives in a local database you can export at any time.
 
-> **Status: specification complete, implementation not started.** This README will be replaced during implementation (see `docs/spec/12-docs-and-delivery.md`).
+**How each marketplace works**
 
-## How it will work
+- **eBay** uses eBay's official API.
+- **Mercari, Poshmark, Depop, Facebook Marketplace and Grailed** are *assisted*: the app opens the marketplace in a browser window (where you are logged in), fills in the listing, and **you click Publish**.
+- **Vinted, OfferUp, Etsy and "Other"** are *manual-assist*: one-click copy of every field, a ready photo folder, and the app records the listing link.
 
-- **eBay** — fully automatic through eBay's official, free developer API.
-- **Mercari, Poshmark, Depop, Facebook Marketplace, Grailed** — *assisted*: none of these offer a public listing API to individual sellers, so the app opens the marketplace in a normal browser window (where you are logged in), fills in the listing, and you review it and click Publish.
-- **Vinted, OfferUp, Etsy, anything else** — *manual-assist*: one-click copy of every field, a ready photo folder, and the app records the listing link.
-- Your local database is the source of truth: it remembers where every item is listed, so when something sells you mark it sold and remove it everywhere else.
+> **Important — marketplace terms.** Some marketplaces (notably Poshmark) restrict automated tools in their terms. Crosslister only works in a visible browser window on your own account, never solves CAPTCHAs or hides that it is automated, and by default leaves the final click to you. You are responsible for following each marketplace's rules.
 
-## Documents
+## Install
 
-| Document | What it is |
-|---|---|
-| [docs/MARKETPLACE_RESEARCH.md](docs/MARKETPLACE_RESEARCH.md) | Research on every marketplace's API, automation feasibility, anti-bot measures and import options, with sources |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture and key decisions |
-| [docs/spec/README.md](docs/spec/README.md) | Step-by-step implementation spec and milestone plan (start here to build it) |
-| [CLAUDE.md](CLAUDE.md) | Instructions for the coding agent implementing the spec |
+You need a Mac, [Node.js 22 or newer](https://nodejs.org) (or `brew install node`) and, ideally, Google Chrome.
 
-## Building it with a coding agent
+```bash
+git clone https://github.com/joshbelot/crosslister.git
+cd crosslister
+npm install
+npx playwright install chromium   # only needed if you don't use Google Chrome
+```
 
-Point the agent at this repository and say:
+## Start
 
-> Implement the app by following `docs/spec/README.md`, milestone by milestone, starting at M1. Follow the rules in `CLAUDE.md`.
+```bash
+npm run dev
+```
+
+Then open <http://localhost:5173>. (Production-style: `npm run build && npm start`, then open <http://localhost:4317>.) Always open the app through `localhost` — it refuses other addresses on purpose.
+
+## Create a listing (about a minute)
+
+1. Click **New Listing** (or press `N`).
+2. Drop your photos on the page (you can also paste them or press `⌘O`). The first photo is the cover; drag to reorder, rotate, crop or delete.
+3. Fill in title, price, condition, brand, category and size. Everything saves automatically.
+4. Choose the marketplaces under **Cross-list to**.
+5. Click **Cross-List Item** (`⌘↵`). A validation screen tells you what each marketplace still needs.
+
+## Connect marketplaces
+
+Open **Settings → Marketplaces** and click **Connect** next to a marketplace. A browser window opens at its login page; log in yourself (including any verification codes). The window keeps the session so you only do this once. eBay needs a one-time developer setup — see [docs/SETUP.md](docs/SETUP.md).
+
+## Cross-list
+
+After you confirm, the **Activity** panel shows progress per marketplace. When the app needs you — to log in, finish a field it couldn't fill, or click Publish — a yellow **needs your attention** card appears with instructions and copy buttons. If a job fails, the card says why and offers **Retry**, **Open marketplace**, and **Mark as listed**. A failed job never marks your item as listed.
+
+## Import existing listings
+
+Use the **Import** page to bring in what you already have:
+
+- **eBay** — reads your active listings through eBay's API.
+- **Mercari, Poshmark, Depop, Grailed** — scans your shop page in the browser window (you may be asked to open your listings page), or reads pasted listing URLs.
+- **Facebook, Vinted, OfferUp, Etsy, other sites** — paste listing URLs; the app reads the page's structured data (title, price, photos, …).
+- **Backup** — restore from a Crosslister backup (ZIP or JSON).
+
+Nothing is added until you review it. Each item shows the photos and the fields the app found (fix anything wrong), and possible duplicates of items you already have — you choose **Import as new**, **Merge into this item** or **Skip**. The app never merges on its own.
+
+## Mark sold and remove elsewhere
+
+On an item's page, **Mark Sold** records the sale and offers to remove the item from the other marketplaces; each removal shows up in Activity. **Deactivate Everywhere** removes it without marking it sold.
+
+## Sales detection
+
+**Inventory → ⋯ → Check listing statuses** looks at your live listings (browser marketplaces are only checked when you ask). If an item sold somewhere, a banner offers to mark it sold and remove it elsewhere — nothing happens automatically. For eBay you can also turn on automatic checks in **Settings → eBay**.
+
+## Optional: AI suggestions
+
+Turn on AI in **Settings → AI** (a local model through Ollama is free; see [docs/SETUP.md](docs/SETUP.md)). Then ✨ **Suggest** buttons appear next to Title and Description, under the photos, and in **Customize per marketplace**. Suggestions are only shown for review; nothing is applied until you click **Use**.
+
+## Back up your data
+
+**Settings → Backup & Export** creates a full ZIP backup (database plus original photos), and exports JSON or CSV. Your data lives in three folders next to the app:
+
+- `data/` — the database, photos, backups
+- `browser-profiles/` — saved marketplace logins (never included in backups)
+- `logs/` — daily log files (also on the **Logs** page)
+
+## More
+
+- [docs/SETUP.md](docs/SETUP.md) — setup, eBay connection, AI, calibration
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — when something goes wrong
+- [docs/MARKETPLACE_ADAPTERS.md](docs/MARKETPLACE_ADAPTERS.md) — how each marketplace is handled and how to fix selectors
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/MARKETPLACE_RESEARCH.md](docs/MARKETPLACE_RESEARCH.md), [docs/spec/README.md](docs/spec/README.md) — design and the build spec

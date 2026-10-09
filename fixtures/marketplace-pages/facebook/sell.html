@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Facebook Marketplace — Create item (fixture)</title>
+<script src="/_shared/fixture.js"></script>
+<style>body{font-family:sans-serif;padding:12px} .row{margin:8px 0} ul[role=listbox]{border:1px solid #999;list-style:none;padding:4px;background:#fff} [hidden]{display:none!important} li{cursor:pointer;padding:2px 6px}</style>
+<script>Fixture.requireLogin('/facebook/login.html');</script></head>
+<body>
+  <nav><a href="/facebook/sell.html">Marketplace</a></nav>
+  <h1>Item for sale</h1>
+  <div id="page1">
+    <div class="row" data-fixture-id="photos"><input type="file" id="photos" multiple accept="image/*" style="display:none" /><div id="previews"></div></div>
+    <div class="row" data-fixture-id="title"><label for="title">Title</label><input id="title" /></div>
+    <div class="row" data-fixture-id="price"><label for="price">Price</label><input id="price" /></div>
+    <div class="row" data-fixture-id="category"><label for="category">Category</label><input id="category" autocomplete="off" />
+      <ul id="category-list" role="listbox"></ul></div>
+    <div class="row" data-fixture-id="condition"><label for="cond">Condition</label>
+      <select id="cond"><option value="">Select</option><option>New</option><option>Used - Like New</option><option>Used - Good</option><option>Used - Fair</option></select></div>
+    <div class="row" data-fixture-id="description"><label for="desc">Description</label><textarea id="desc"></textarea></div>
+    <div class="row" data-fixture-id="brand"><label for="brand">Brand</label><input id="brand" /></div>
+    <div class="row" data-fixture-id="size"><label for="size">Size</label><input id="size" /></div>
+    <div class="row" data-fixture-id="hide"><button id="hide" type="button" role="switch" aria-checked="false" aria-label="Hide from friends">Hide from friends</button></div>
+    <button id="next" type="button" data-fixture-id="next">Next</button>
+  </div>
+  <div id="page2" hidden><h2>Audience and delivery</h2><button id="publish" type="button">Publish</button></div>
+<script>
+  Fixture.applyMissing();
+  const $ = (id) => document.getElementById(id);
+  const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
+  if ($('photos')) Fixture.uploads($('photos'), $('previews'), 'photos');
+  on('title', 'input', (e) => Fixture.record('title', e.target.value));
+  on('price', 'input', (e) => Fixture.record('price', e.target.value));
+  if ($('category')) {
+    const CATS = ["Men's Clothing", "Women's Clothing", "Men's Shoes", "Women's Shoes", 'Handbags', 'Bags & Luggage', 'Jewelry & Watches', 'Home Decor', 'Miscellaneous'];
+    Fixture.typeahead($('category'), $('category-list'), CATS, 'category');
+  }
+  on('cond', 'change', (e) => Fixture.record('condition', e.target.options[e.target.selectedIndex].text));
+  on('desc', 'input', (e) => Fixture.record('description', e.target.value));
+  on('brand', 'input', (e) => Fixture.record('brand', e.target.value));
+  on('size', 'input', (e) => Fixture.record('size', e.target.value));
+  on('hide', 'click', (e) => { const b = e.currentTarget; const v = b.getAttribute('aria-checked') !== 'true'; b.setAttribute('aria-checked', String(v)); Fixture.record('hideFromFriends', v); });
+  on('next', 'click', () => { $('page1').hidden = true; $('page2').hidden = false; });
+  on('publish', 'click', () => {
+    Fixture.saveFilled();
+    location.href = Fixture.params.get('publishTo') === 'selling' ? '/facebook/marketplace/you/selling' : '/facebook/marketplace/item/1234567890123456/';
+  });
+</script>
+</body></html>
