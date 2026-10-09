@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Grailed — Edit listing (fixture)</title>
+<script src="/_shared/fixture.js"></script><script>Fixture.requireLogin('/grailed/login.html');</script>
+<style>[hidden]{display:none!important}</style></head>
+<body>
+  <nav><a href="/grailed/sell.html">My Items</a></nav>
+  <h1>Edit listing</h1>
+  <button id="delete" type="button" data-fixture-id="delete">Delete listing</button>
+  <div id="dialog" role="dialog" aria-label="Delete listing?" hidden><p>Delete this listing?</p>
+    <button id="confirm" type="button">Delete</button><button type="button" onclick="document.getElementById('dialog').hidden = true">Cancel</button></div>
+<script>
+  Fixture.applyMissing();
+  const d = document.getElementById('delete');
+  if (d) d.addEventListener('click', () => { document.getElementById('dialog').hidden = false; });
+  document.getElementById('confirm').addEventListener('click', () => { localStorage.setItem('cl-deleted', '1'); location.href = '/grailed/sell.html'; });
+</script>
+</body></html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Grailed — Sell (fixture)</title>
+<script src="/_shared/fixture.js"></script>
+<style>body{font-family:sans-serif;padding:12px} .row{margin:8px 0} ul[role=menu],ul[role=listbox]{border:1px solid #999;list-style:none;padding:4px;background:#fff} [hidden]{display:none!important} li{cursor:pointer;padding:2px 6px}</style>
+<script>Fixture.requireLogin('/grailed/login.html');</script></head>
+<body>
+  <nav><a href="/grailed/sell.html">My Items</a></nav>
+  <h1>Sell an item</h1>
+  <div class="row" data-fixture-id="photos"><input type="file" id="photos" multiple accept="image/*" style="display:none" /><div id="previews"></div></div>
+  <div class="row" data-fixture-id="category"><button id="category" type="button" role="combobox" aria-label="Department / category" aria-expanded="false">Select a category</button><ul id="category-menu" role="menu" hidden></ul></div>
+  <div class="row" data-fixture-id="designer"><label for="designer">Designer</label><input id="designer" autocomplete="off" /><ul id="designer-list"></ul></div>
+  <div class="row" data-fixture-id="size"><label for="size">Size</label>
+    <select id="size"><option value="">Select</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>28</option><option>30</option><option>32</option><option>34</option><option>9</option><option>10</option></select></div>
+  <div class="row" data-fixture-id="title"><label for="title">Item name</label><input id="title" /></div>
+  <div class="row" data-fixture-id="color"><label for="color">Color</label>
+    <select id="color"><option value="">Select</option><option>Black</option><option>White</option><option>Blue</option><option>Red</option></select></div>
+  <div class="row" data-fixture-id="condition"><label for="cond">Condition</label>
+    <select id="cond"><option value="">Select</option><option>New/Never Worn</option><option>Gently Used</option><option>Used</option><option>Very Worn</option></select></div>
+  <div class="row" data-fixture-id="description"><label for="desc">Description</label><textarea id="desc"></textarea></div>
+  <div class="row" data-fixture-id="price"><label for="price">Price</label><input id="price" /></div>
+  <button id="publish" type="button" data-fixture-id="submit">Publish</button>
+<script>
+  Fixture.applyMissing();
+  const $ = (id) => document.getElementById(id);
+  const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
+  if ($('photos')) Fixture.uploads($('photos'), $('previews'), 'photos');
+  if ($('category')) Fixture.menu($('category'), $('category-menu'), {
+    Menswear: {
+      Tops: ['Short Sleeve T-Shirts', 'Shirts (Button Ups)', 'Polos', 'Sweatshirts & Hoodies', 'Sweaters & Knitwear'],
+      Bottoms: ['Denim', 'Casual Pants', 'Shorts', 'Sweatpants & Joggers'],
+      Footwear: ['Low-Top Sneakers', 'Hi-Top Sneakers', 'Boots', 'Sandals'],
+      Outerwear: ['Light Jackets', 'Heavy Coats', 'Vests'],
+      Accessories: ['Hats', 'Belts', 'Bags & Luggage'],
+    },
+    Womenswear: { Tops: ['Blouses', 'Tees'], Bottoms: ['Jeans', 'Skirts'], Dresses: ['Mini', 'Maxi'], Footwear: ['Boots'] },
+  }, 'category');
+  if ($('designer')) Fixture.typeahead($('designer'), $('designer-list'), ["Levi's", 'Nike', 'Supreme', 'Patagonia'], 'designer');
+  on('size', 'change', (e) => Fixture.record('size', e.target.options[e.target.selectedIndex].text));
+  on('title', 'input', (e) => Fixture.record('title', e.target.value));
+  on('color', 'change', (e) => Fixture.record('color', e.target.options[e.target.selectedIndex].text));
+  on('cond', 'change', (e) => Fixture.record('condition', e.target.options[e.target.selectedIndex].text));
+  on('desc', 'input', (e) => Fixture.record('description', e.target.value));
+  on('price', 'input', (e) => Fixture.record('price', e.target.value));
+  on('publish', 'click', () => { Fixture.saveFilled(); location.href = '/grailed/listings/1234567-vintage-levis-jeans'; });
+</script>
+</body></html>

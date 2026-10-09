@@ -39,6 +39,8 @@ window.Fixture = {
       show(Array.isArray(n) ? n : Object.keys(n), picked.length);
     }
     trigger.addEventListener('click', () => { picked = []; show(Object.keys(tree), 0); });
+    // like a real dropdown, clicking elsewhere closes the menu
+    document.addEventListener('click', (e) => { const path = e.composedPath(); if (!path.includes(menuEl) && !path.includes(trigger)) menuEl.hidden = true; });
   },
   /** Typeahead: show matching suggestions under `input`; clicking one records it. */
   typeahead(input, listEl, options, key) {

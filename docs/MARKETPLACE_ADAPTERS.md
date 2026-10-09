@@ -52,6 +52,14 @@ Limits and known issues are added here as each adapter is built.
 - **Known limits:** the 1,000-character description limit includes the title and hashtags; parcel-size tiers are estimates; Depop's partner API (if granted) would be a better long-term route.
 - **Calibration:** not yet calibrated against the live site. Selectors: `src/server/marketplaces/depop/selectors.ts`.
 
+### Grailed (assisted, uncalibrated)
+
+- **Automated:** photos (max 8), category path (menswear fully; womenswear down to the category), designer, size, item name (60 chars), color, condition, description (1,000), price (whole dollars).
+- **You do:** log in, review, click **Publish**. For womenswear the app asks you to choose the subcategory.
+- **Deactivate:** opens the listing's edit page and deletes it; falls back to asking you.
+- **Known limits:** Grailed only accepts menswear and womenswear (other departments are blocked in validation); requires brand, size and description.
+- **Calibration:** not yet calibrated against the live site. Selectors: `src/server/marketplaces/grailed/selectors.ts`.
+
 ### Facebook Marketplace (assisted, uncalibrated)
 
 - **Automated:** photos (max 10), title (100), price (whole dollars), category (types search terms such as "Men's Clothing" and picks the match), condition, description, brand and size when the form shows them, "Hide from friends" if you turn it on, then **Next**.

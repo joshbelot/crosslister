@@ -6,6 +6,7 @@ import { manualAdapter } from './manual';
 import { depopAdapter } from './depop';
 import { ebayAdapter } from './ebay';
 import { facebookAdapter } from './facebook';
+import { grailedAdapter } from './grailed';
 import { mercariAdapter } from './mercari';
 import { poshmarkAdapter } from './poshmark';
 import type { MarketplaceAdapter } from './types';
@@ -24,7 +25,7 @@ function defaultAdapters(): AnyAdapter[] {
     depopAdapter,
     facebookAdapter,
     ebayAdapter,
-    manualAdapter('grailed', 'Grailed', { home: 'https://www.grailed.com/', sell: 'https://www.grailed.com/sell' }),
+    grailedAdapter,
     manualAdapter('vinted', 'Vinted', { home: 'https://www.vinted.com/', sell: 'https://www.vinted.com/items/new' }, { titleMaxLength: 100, descriptionMaxLength: 2000 }),
     manualAdapter('offerup', 'OfferUp', { home: 'https://offerup.com/', sell: 'https://offerup.com/' }),
     manualAdapter('etsy', 'Etsy', { home: 'https://www.etsy.com/', sell: 'https://www.etsy.com/your/shops/me/listing-editor/create' }, { titleMaxLength: 140, descriptionMaxLength: 10000 }),
