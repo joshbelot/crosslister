@@ -15,6 +15,7 @@ import { logger } from './services/logger';
 import { exportRoutes } from './routes/export';
 import { eventsRoutes } from './routes/events';
 import { healthRoutes } from './routes/health';
+import { importRoutes } from './routes/import';
 import { jobsRoutes } from './routes/jobs';
 import { listingsRoutes } from './routes/listings';
 import { logsRoutes } from './routes/logs';
@@ -84,6 +85,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     await api.register(jobsRoutes);
     await api.register(salesRoutes);
     await api.register(exportRoutes);
+    await api.register(importRoutes);
   }, { prefix: '/api' });
 
   if (config.isProd) {

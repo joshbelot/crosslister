@@ -50,6 +50,67 @@ async function measure(file: string): Promise<{ width: number; height: number }>
   return { width, height };
 }
 
+/**
+ * Steps 4–8 of 03 §9.1: move the temp file into `original/`, convert HEIC, read dimensions, render derived files and insert the row.
+ * Returns an error sentence for the caller to show, or null on success.
+ */
+async function ingestOriginal(
+  db: Db, listingId: string, tmp: string, name: string, ext: string, sha256: string, bytes: number, mimeFallback: string, existing: PhotoRow[],
+): Promise<string | null> {
+  const id = nanoid12();
+  const storedFilename = `${id}${ext}`;
+  fs.mkdirSync(originalDir(listingId), { recursive: true });
+  fs.mkdirSync(derivedDir(listingId), { recursive: true });
+  const dest = path.join(originalDir(listingId), storedFilename);
+  fs.renameSync(tmp, dest);
+  try {
+    if (ext === '.heic' || ext === '.heif') {
+      await convertHeicToJpeg(dest, path.join(derivedDir(listingId), `${id}_source.jpg`));
+    }
+    const dims = await measure(sourcePath({ id, listingId, storedFilename }));
+    if (!dims.width || !dims.height) throw new Error('unreadable image');
+    const draft = { id, listingId, storedFilename, rotation: 0, crop: null };
+    const { dhash } = await generateDerived(draft);
+    const position = existing.length ? Math.max(...existing.map((p) => p.position)) + 1 : 0;
+    db.insert(photos).values({
+      id, listingId, position, originalFilename: name, storedFilename,
+      mimeType: MIME_BY_EXT[ext] ?? mimeFallback, width: dims.width, height: dims.height, bytes, sha256, dhash,
+      rotation: 0, crop: null, version: 1, createdAt: nowIso(),
+    }).run();
+    return null;
+  } catch (err) {
+    removePhotoFiles(listingId, id);
+    if (err instanceof AppError) return `${name}: ${err.userMessage}`;
+    logger.warn('PHOTOS', `Could not read ${name}: ${(err as Error).message}`, { listingId });
+    return `${name}: this file could not be read as an image.`;
+  }
+}
+
+/** Add a photo from a file on disk (used by imports and backup restore). The source file is copied, never moved. */
+export async function addPhotoFromFile(
+  db: Db, listingId: string, filePath: string, originalFilename: string, opts: { rotation?: 0 | 90 | 180 | 270; crop?: PhotoCrop | null } = {},
+): Promise<{ photo: Photo | null; error: string | null }> {
+  const ext = path.extname(originalFilename || filePath).toLowerCase() || '.jpg';
+  if (!ACCEPTED_IMAGE_EXTENSIONS.includes(ext)) return { photo: null, error: `${originalFilename}: unsupported file type. Use JPG, PNG, WEBP or HEIC.` };
+  const existing = listPhotoRows(db, listingId);
+  if (existing.length >= MAX_PHOTOS_PER_LISTING) return { photo: null, error: `${originalFilename}: a listing can have at most ${MAX_PHOTOS_PER_LISTING} photos.` };
+  fs.mkdirSync(paths.tmpDir, { recursive: true });
+  const buf = fs.readFileSync(filePath);
+  const sha256 = crypto.createHash('sha256').update(buf).digest('hex');
+  if (existing.some((p) => p.sha256 === sha256)) return { photo: null, error: null };
+  const tmp = path.join(paths.tmpDir, nanoid12());
+  fs.writeFileSync(tmp, buf);
+  const error = await ingestOriginal(db, listingId, tmp, originalFilename, ext, sha256, buf.length, MIME_BY_EXT[ext] ?? 'image/jpeg', existing);
+  if (error) return { photo: null, error };
+  const row = listPhotoRows(db, listingId).find((p) => p.sha256 === sha256)!;
+  if (opts.rotation || opts.crop) {
+    const photo = await editPhoto(db, row.id, { rotation: opts.rotation ?? 0, crop: opts.crop ?? null });
+    return { photo, error: null };
+  }
+  touchListing(db, listingId);
+  return { photo: rowToPhoto(row), error: null };
+}
+
 export interface UploadResult { photos: Photo[]; errors: string[]; notes: string[] }
 
 /** Handles one multipart request: files are processed sequentially (09 §9.1). */
@@ -91,36 +152,8 @@ export async function uploadPhotos(db: Db, listingId: string, files: AsyncIterab
       continue;
     }
 
-    const id = nanoid12();
-    const storedFilename = `${id}${ext}`;
-    fs.mkdirSync(originalDir(listingId), { recursive: true });
-    fs.mkdirSync(derivedDir(listingId), { recursive: true });
-    const dest = path.join(originalDir(listingId), storedFilename);
-    fs.renameSync(tmp, dest);
-
-    try {
-      if (ext === '.heic' || ext === '.heif') {
-        await convertHeicToJpeg(dest, path.join(derivedDir(listingId), `${id}_source.jpg`));
-      }
-      const dims = await measure(sourcePath({ id, listingId, storedFilename }));
-      if (!dims.width || !dims.height) throw new Error('unreadable image');
-      const draft = { id, listingId, storedFilename, rotation: 0, crop: null };
-      const { dhash } = await generateDerived(draft);
-      const position = existing.length ? Math.max(...existing.map((p) => p.position)) + 1 : 0;
-      db.insert(photos).values({
-        id, listingId, position, originalFilename: name, storedFilename,
-        mimeType: MIME_BY_EXT[ext] ?? part.mimetype, width: dims.width, height: dims.height, bytes, sha256, dhash,
-        rotation: 0, crop: null, version: 1, createdAt: nowIso(),
-      }).run();
-    } catch (err) {
-      removePhotoFiles(listingId, id);
-      if (err instanceof AppError) {
-        errors.push(`${name}: ${err.userMessage}`);
-      } else {
-        logger.warn('PHOTOS', `Could not read ${name}: ${(err as Error).message}`, { listingId });
-        errors.push(`${name}: this file could not be read as an image.`);
-      }
-    }
+    const outcome = await ingestOriginal(db, listingId, tmp, name, ext, sha256, bytes, part.mimetype, existing);
+    if (outcome) errors.push(outcome);
   }
 
   touchListing(db, listingId);

@@ -21,6 +21,8 @@ export interface JobContext {
   sleep(ms: number): Promise<void>;           // cancellable
   page(): Promise<Page>;                      // browser adapters: browserManager.getPage(mp)
   screenshot(label: string): Promise<string | null>;
+  /** Update the message of the step that is currently running (e.g. "Found 12 listings…"). */
+  progress(message: string): void;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -32,7 +34,7 @@ import { jobSteps } from '../db/schema';
 import { browserManager } from '../browser/browserManager';
 import { adapterError, AdapterError, toAdapterError } from '../marketplaces/common';
 import { paths } from '../paths';
-import { addStep, finishStep, setStepScreenshot, updateJob } from './jobs';
+import { addStep, finishStep, setStepMessage, setStepScreenshot, updateJob } from './jobs';
 import { logger } from './logger';
 import { notifyUser } from './notify';
 
@@ -170,6 +172,7 @@ export function createJobContext(db: Db, job: Job, signal: AbortSignal, settings
 
     page: () => browserManager.getPage(mp),
     screenshot,
+    progress(message) { if (currentStepId !== null) setStepMessage(db, currentStepId, message); },
   };
   return ctx;
 }

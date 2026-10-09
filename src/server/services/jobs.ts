@@ -95,6 +95,11 @@ export function finishStep(db: Db, stepId: number, state: StepState, message?: s
   if (row) events.publish({ type: 'job.updated', job: getJob(db, row.jobId) });
 }
 
+export function setStepMessage(db: Db, stepId: number, message: string): void {
+  const row = db.update(jobSteps).set({ message }).where(eq(jobSteps.id, stepId)).returning().get();
+  if (row) events.publish({ type: 'job.updated', job: getJob(db, row.jobId) });
+}
+
 export function setStepScreenshot(db: Db, stepId: number, screenshotPath: string): void {
   db.update(jobSteps).set({ screenshotPath }).where(eq(jobSteps.id, stepId)).run();
 }

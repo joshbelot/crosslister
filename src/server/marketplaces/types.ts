@@ -9,6 +9,7 @@ import type {
 } from '../../shared/types';
 import type { LocatorSpec } from '../browser/locators';
 import type { Db } from '../db/client';
+import type { MarketplaceImporter } from '../importers/types';
 import type { PhotoRow } from '../db/schema';
 import type { PhotoSpec } from '../services/imageProcessing';
 import type { JobContext } from '../services/jobContext';
@@ -42,11 +43,7 @@ export interface PublishResult { remoteId: string | null; url: string | null; ve
 export type RemoteStatus = 'active' | 'sold' | 'ended' | 'unknown';
 export interface ConnectionResult { status: 'connected' | 'logged_out' | 'not_configured'; accountName: string | null; message: string | null }
 
-/** Phase 4 importer contract (07); fleshed out in M27. */
-export interface MarketplaceImporter {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
-}
+export type { MarketplaceImporter };
 
 export interface MarketplaceAdapter<TData = Record<string, unknown>> {
   id: MarketplaceId;
