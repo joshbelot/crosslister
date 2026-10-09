@@ -107,3 +107,29 @@ describe('attributes from photos', () => {
     expect((await req(t.app, 'POST', '/api/ai/attributes', { listingId: l.id })).statusCode).toBe(400);
   });
 });
+
+describe('marketplace copy', () => {
+  it('asks per marketplace with its style and limits, then enforces the limits', async () => {
+    const l = await seedListing(t.app);
+    const long = 'word '.repeat(2000);
+    __setProviderForTest(fake([
+      JSON.stringify({ title: 'T'.repeat(200), description: 'Short desc' }),
+      JSON.stringify({ title: 'ignored', description: long }),
+    ]));
+    const r = (await req(t.app, 'POST', '/api/ai/marketplace-copy', { listingId: l.id, marketplaceIds: ['poshmark', 'depop', 'poshmark'] })).json();
+    expect(calls).toHaveLength(2);
+    expect(calls[0]!.prompt).toContain('for Poshmark');
+    expect(calls[0]!.prompt).toContain('friendly, fashion-focused');
+    expect(calls[1]!.prompt).toContain('up to 5 relevant hashtags');
+    expect(r.items.map((i: { marketplaceId: string }) => i.marketplaceId)).toEqual(['poshmark', 'depop']);
+    expect(r.items[0].title.length).toBeLessThanOrEqual(80);
+    expect(r.items[0].description).toBe('Short desc');
+    expect(r.items[1].description.length).toBeLessThanOrEqual(1000 * 10);
+    expect(r.items[1].description.length).toBeGreaterThan(0);
+  });
+  it('requires at least one marketplace', async () => {
+    const l = await seedListing(t.app);
+    __setProviderForTest(fake(['{}']));
+    expect((await req(t.app, 'POST', '/api/ai/marketplace-copy', { listingId: l.id, marketplaceIds: [] })).statusCode).toBe(400);
+  });
+});

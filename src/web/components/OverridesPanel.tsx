@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { Loader2, Sparkles, X } from 'lucide-react';
 import clsx from 'clsx';
 import type { MarketplaceId } from '../../shared/constants';
+import { api, ApiError } from '../api/client';
 import { useListing, useMarketplaces, usePatchTarget, usePreview } from '../api/hooks';
+import { useAiEnabled } from './AiSuggest';
 import { formatCents } from '../lib/format';
 import { DataFieldInput } from './DataFieldInput';
 import { PriceInput } from './fields/PriceInput';
 
-function Tab({ mp, listingId, listingTitle }: { mp: MarketplaceId; listingId: string; listingTitle: string }) {
+export interface CopySuggestion { marketplaceId: MarketplaceId; title: string | null; description: string }
+
+function Tab({ mp, listingId, listingTitle, suggestion, onUsed }: { mp: MarketplaceId; listingId: string; listingTitle: string; suggestion?: CopySuggestion | undefined; onUsed: () => void }) {
   const listing = useListing(listingId).data;
   const info = (useMarketplaces().data ?? []).find((m) => m.id === mp);
   const preview = usePreview(listingId, mp);
@@ -43,6 +47,17 @@ function Tab({ mp, listingId, listingTitle }: { mp: MarketplaceId; listingId: st
           </div>
         )}
       </section>
+      {suggestion && (
+        <section className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm" aria-label="AI suggestion">
+          <h3 className="mb-1 flex items-center gap-1 font-semibold text-indigo-900"><Sparkles size={14} /> Suggested version</h3>
+          {suggestion.title && <p className="font-medium">{suggestion.title}</p>}
+          <p className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap">{suggestion.description}</p>
+          <div className="mt-2 flex gap-2">
+            <button className="btn btn-primary btn-sm" onClick={() => { save({ ...(suggestion.title ? { titleOverride: suggestion.title } : {}), descriptionOverride: suggestion.description }); onUsed(); }}>Use as override</button>
+            <button className="btn btn-ghost btn-sm" onClick={onUsed}>Dismiss</button>
+          </div>
+        </section>
+      )}
       <section className="space-y-4">
         <h3 className="text-sm font-semibold text-zinc-700">Overrides</h3>
         <div>
@@ -84,6 +99,17 @@ export function OverridesPanel({ listingId, listingTitle, marketplaceIds, active
   listingId: string; listingTitle: string; marketplaceIds: MarketplaceId[]; active: MarketplaceId; onTab: (mp: MarketplaceId) => void; onClose: () => void;
 }) {
   const infos = useMarketplaces().data ?? [];
+  const aiEnabled = useAiEnabled();
+  const [copy, setCopy] = useState<Record<string, CopySuggestion>>({});
+  const [writing, setWriting] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const writeAll = async () => {
+    setWriting(true); setAiError(null);
+    try {
+      const r = await api.post<{ items: CopySuggestion[] }>('/api/ai/marketplace-copy', { listingId, marketplaceIds });
+      setCopy(Object.fromEntries(r.items.map((i) => [i.marketplaceId, i])));
+    } catch (e) { setAiError(e instanceof ApiError ? e.message : String(e)); } finally { setWriting(false); }
+  };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -104,7 +130,18 @@ export function OverridesPanel({ listingId, listingTitle, marketplaceIds, active
             </button>
           ))}
         </div>
-        <div className="flex-1 overflow-y-auto p-5"><Tab key={active} mp={active} listingId={listingId} listingTitle={listingTitle} /></div>
+        {aiEnabled && (
+          <div className="flex items-center gap-3 border-b border-zinc-200 px-5 py-2">
+            <button className="btn btn-secondary btn-sm" disabled={writing} onClick={() => void writeAll()}>
+              {writing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Write versions for all marketplaces
+            </button>
+            {aiError && <span className="error-text">{aiError}</span>}
+          </div>
+        )}
+        <div className="flex-1 overflow-y-auto p-5">
+          <Tab key={active} mp={active} listingId={listingId} listingTitle={listingTitle} suggestion={copy[active]}
+            onUsed={() => setCopy((c) => { const n = { ...c }; delete n[active]; return n; })} />
+        </div>
       </aside>
     </div>
   );

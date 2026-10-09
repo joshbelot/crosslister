@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { marketplaceIdSchema } from '../../shared/schemas';
-import { suggestAttributes, suggestDescription, suggestTitles } from '../ai/features';
+import { suggestAttributes, suggestDescription, suggestMarketplaceCopy, suggestTitles } from '../ai/features';
 import { getProvider } from '../ai/provider';
 import { getSettings } from '../services/settings';
 
@@ -18,4 +18,9 @@ export async function aiRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.post('/ai/attributes', async (req) => suggestAttributes(app.db, listingBody.parse(req.body).listingId));
+
+  app.post('/ai/marketplace-copy', async (req) => {
+    const b = listingBody.extend({ marketplaceIds: z.array(marketplaceIdSchema).min(1) }).parse(req.body);
+    return suggestMarketplaceCopy(app.db, b.listingId, b.marketplaceIds);
+  });
 }

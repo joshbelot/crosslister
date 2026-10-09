@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MARKETPLACE_NAMES } from '../../shared/constants';
 import { COLOR_IDS, MAX_COLORS, type ColorId } from '../../shared/colors';
 import { CATEGORIES, categoryAncestry, categoryPathLabel, isSelectableCategory } from '../../shared/taxonomy';
 import type { MarketplaceId } from '../../shared/constants';
@@ -113,4 +114,45 @@ export async function suggestAttributes(db: Db, listingId: string): Promise<Attr
     maxTokens: 500,
   }, attributeSchema);
   return validateAttributes(raw);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Marketplace-specific versions (09 §4.4)
+// ---------------------------------------------------------------------------------------------
+
+export const MARKETPLACE_STYLES: Record<MarketplaceId, string> = {
+  mercari: 'concise, keyword-rich',
+  poshmark: 'friendly, fashion-focused',
+  depop: 'casual, short lines, up to 5 relevant hashtags at the end',
+  facebook: "plain and local, mention pickup or shipping per seller's notes",
+  ebay: 'detailed, factual, item-specifics style',
+  grailed: 'brand/designer-first, menswear vocabulary',
+  vinted: 'neutral', offerup: 'neutral', etsy: 'neutral', other: 'neutral',
+};
+
+export interface MarketplaceCopy { marketplaceId: MarketplaceId; title: string | null; description: string }
+
+const copySchema = z.object({ title: z.string().nullable().optional(), description: z.string().min(1) });
+
+export async function suggestMarketplaceCopy(db: Db, listingId: string, marketplaceIds: MarketplaceId[]): Promise<{ items: MarketplaceCopy[] }> {
+  const l = getListing(db, listingId);
+  const provider = getProvider(getSettings(db));
+  const details = renderItemDetails(l);
+  const items: MarketplaceCopy[] = [];
+  for (const id of [...new Set(marketplaceIds)]) {
+    const caps = getAdapter(id).capabilities;
+    const titleMax = caps.titleMaxLength;
+    const descMax = caps.descriptionMaxLength;
+    const out = await completeJson(provider, {
+      system: SYSTEM_PROMPT,
+      prompt: `Item details:\n${details}\n\nRewrite the title (${titleMax === null ? 'none' : `max ${titleMax} chars`}) and description (max ${descMax} chars) for ${MARKETPLACE_NAMES[id]}. `
+        + `Style: ${MARKETPLACE_STYLES[id]}. Keep all facts and flaws. Return JSON {"title": string|null, "description": string}.`,
+      maxTokens: 900,
+    }, copySchema);
+    const title = titleMax === null ? null : (out.title ?? '').trim().slice(0, titleMax) || null;
+    let description = out.description.trim();
+    if (description.length > descMax) description = description.slice(0, descMax).replace(/\s+\S*$/, '').trim();
+    items.push({ marketplaceId: id, title, description });
+  }
+  return { items };
 }
