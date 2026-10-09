@@ -12,6 +12,7 @@ import { setAdapterDb } from './marketplaces/common';
 import { initBrowserManager } from './browser/browserManager';
 import { jobRunner } from './services/jobRunner';
 import { logger } from './services/logger';
+import { aiRoutes } from './routes/ai';
 import { exportRoutes } from './routes/export';
 import { eventsRoutes } from './routes/events';
 import { healthRoutes } from './routes/health';
@@ -86,6 +87,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     await api.register(salesRoutes);
     await api.register(exportRoutes);
     await api.register(importRoutes);
+    await api.register(aiRoutes);
   }, { prefix: '/api' });
 
   if (config.isProd) {
