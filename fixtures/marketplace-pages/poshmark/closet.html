@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8" /><title>Poshmark — Closet (fixture)</title>
+<script src="/_shared/fixture.js"></script></head>
+<body>
+  <nav><a href="/poshmark/closet.html">My Closet</a></nav><h1>My closet</h1>
+  <div id="grid">
+    <a href="/poshmark/listing/blue-jacket-aaaaaaaaaaaaaaaaaaaaaaaa?src=closet"><img src="/poshmark/thumb1.jpg" alt="Blue jacket" /><span>Blue jacket</span></a>
+    <a href="/poshmark/listing/red-dress-bbbbbbbbbbbbbbbbbbbbbbbb"><img src="/poshmark/thumb2.jpg" alt="Red dress" /></a>
+    <a href="/poshmark/sell.html">Sell</a>
+  </div>
+  <div style="height:3000px"></div>
+  <script>
+    // Lazy-loaded third item appears after scrolling, like an infinite-scroll closet.
+    let added = false;
+    addEventListener('scroll', () => {
+      if (added) return; added = true;
+      document.getElementById('grid').insertAdjacentHTML('beforeend', '<a href="/poshmark/listing/green-coat-cccccccccccccccccccccccc"><span>Green coat</span></a>');
+    });
+  </script>
+</body></html>

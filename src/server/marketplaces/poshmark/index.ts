@@ -8,6 +8,7 @@ import {
   browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapColors, mapCondition,
   pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
 } from '../common';
+import { createBrowserImporter } from '../../importers/browserImporter';
 import type { BrowserAdapter, EffectiveListing } from '../types';
 import {
   POSHMARK_COLORS, POSHMARK_CONDITIONS, POSHMARK_CONDITION_LABELS, POSHMARK_HOSTS, POSHMARK_LISTING_REGEX, POSHMARK_UNSUPPORTED_DEPARTMENTS,
@@ -192,3 +193,6 @@ export const poshmarkAdapter: BrowserAdapter<PoshmarkData> = {
     await runBrowserDeactivate(ctx, poshmarkAdapter, ml, recipe);
   },
 };
+
+// Shop-page + pasted-URL import (07 §5.3). Assisted, uncalibrated.
+poshmarkAdapter.importer = createBrowserImporter(poshmarkAdapter as unknown as BrowserAdapter, { shopUrl: (account) => (account ? `https://poshmark.com/closet/${account}` : null) });

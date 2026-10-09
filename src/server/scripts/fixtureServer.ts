@@ -18,7 +18,7 @@ function resolveFile(urlPath: string): string | null {
   if (fs.existsSync(abs) && fs.statSync(abs).isFile()) return abs;
   const mp = clean.split(path.sep)[0];
   if (!mp) return null;
-  const fallback = /selling/i.test(clean) ? 'selling.html' : /edit/i.test(clean) ? 'edit.html' : 'item.html';
+  const fallback = /selling/i.test(clean) ? 'selling.html' : /edit/i.test(clean) ? 'edit.html' : /listing\//i.test(clean) && fs.existsSync(path.join(root, mp, 'listing.html')) ? 'listing.html' : 'item.html';
   const f = path.join(root, mp, fallback);
   return fs.existsSync(f) ? f : null;
 }

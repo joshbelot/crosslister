@@ -8,6 +8,7 @@ import {
   browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapColors, mapCondition,
   pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
 } from '../common';
+import { createBrowserImporter } from '../../importers/browserImporter';
 import type { BrowserAdapter } from '../types';
 import {
   DEPOP_COLORS, DEPOP_CONDITIONS, DEPOP_CONDITION_LABELS, DEPOP_HOSTS, DEPOP_LISTING_REGEX, depopCategoryPath, depopHashtagLine,
@@ -169,3 +170,6 @@ export const depopAdapter: BrowserAdapter<DepopData> = {
     await runBrowserDeactivate(ctx, depopAdapter, ml, recipe);
   },
 };
+
+// Shop-page + pasted-URL import (07 §5.3). Assisted, uncalibrated.
+depopAdapter.importer = createBrowserImporter(depopAdapter as unknown as BrowserAdapter, { shopUrl: (account) => (account ? `https://www.depop.com/${account}/` : null) });

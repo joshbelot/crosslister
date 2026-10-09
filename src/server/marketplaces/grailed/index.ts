@@ -9,6 +9,7 @@ import {
   browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapCondition, pollUntil,
   resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
 } from '../common';
+import { createBrowserImporter } from '../../importers/browserImporter';
 import type { BrowserAdapter } from '../types';
 import {
   GRAILED_CONDITIONS, GRAILED_CONDITION_LABELS, GRAILED_DEPARTMENTS, GRAILED_HOSTS, GRAILED_LISTING_REGEX, grailedCategoryPath,
@@ -160,3 +161,6 @@ export const grailedAdapter: BrowserAdapter<GrailedData> = {
     await runBrowserDeactivate(ctx, grailedAdapter, ml, recipe);
   },
 };
+
+// Shop-page + pasted-URL import (07 §5.3). Assisted, uncalibrated.
+grailedAdapter.importer = createBrowserImporter(grailedAdapter as unknown as BrowserAdapter, { shopUrl: () => null });
