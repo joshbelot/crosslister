@@ -78,8 +78,8 @@ function SourceStep({ onStarted }: { onStarted: (id: string) => void }) {
     onError: (e: ApiError) => toast.error(e.message),
   });
   const restore = useMutation({
-    mutationFn: async (file: File) => api.upload<{ imported: number }>('/api/import/backup', [file]),
-    onSuccess: (r) => toast.success(`Restored ${r.imported} listings.`),
+    mutationFn: async (file: File) => api.upload<{ batch: Batch; count: number }>('/api/import/backup', [file]),
+    onSuccess: (r) => onStarted(r.batch.id),
     onError: (e: ApiError) => toast.error(e.message),
   });
 

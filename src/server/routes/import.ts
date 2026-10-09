@@ -1,7 +1,13 @@
 import fs from 'node:fs';
+import path from 'node:path';
+import { pipeline as streamPipeline } from 'node:stream/promises';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { listingPatchSchema, marketplaceIdSchema } from '../../shared/schemas';
+import { AppError } from '../errors';
+import { nanoid12 } from '../ids';
+import { paths } from '../paths';
+import { stageBackup } from '../importers/backupImport';
 import {
   commitAll, commitItem, createBatch, deleteBatch, fetchSelected, getBatch, listBatches, stagedPhotoPath,
 } from '../importers/pipeline';
@@ -35,6 +41,21 @@ export async function importRoutes(app: FastifyInstance): Promise<void> {
     const body = z.object({ action: z.enum(['new', 'merge', 'skip']), targetListingId: z.string().optional(), overrides: listingPatchSchema.optional() }).parse(req.body);
     const { item, listing } = await commitItem(app.db, id, body);
     return { item: { ...item, raw: undefined }, listing };
+  });
+  app.post('/import/backup', async (req) => {
+    const part = await req.file({ limits: { fileSize: 4 * 1024 * 1024 * 1024 } });
+    if (!part) throw new AppError('VALIDATION', 400, 'Choose a backup file (.zip or .json).');
+    if (!/\.(zip|json)$/i.test(part.filename)) throw new AppError('UNSUPPORTED_BACKUP', 400, 'Choose a Crosslister backup (.zip or .json).');
+    fs.mkdirSync(paths.tmpDir, { recursive: true });
+    const tmp = path.join(paths.tmpDir, `upload-${nanoid12()}${path.extname(part.filename).toLowerCase()}`);
+    try {
+      await streamPipeline(part.file, fs.createWriteStream(tmp));
+      if (part.file.truncated) throw new AppError('UNSUPPORTED_BACKUP', 400, 'That backup file is too large.');
+      const { batchId, count } = await stageBackup(app.db, { path: tmp, name: part.filename });
+      return { batch: getBatch(app.db, batchId).batch, count };
+    } finally {
+      fs.rmSync(tmp, { force: true });
+    }
   });
   app.get('/import/items/:id/photos/:n', async (req, reply) => {
     const { id, n } = z.object({ id: z.string(), n: z.coerce.number().int().min(0) }).parse(req.params);

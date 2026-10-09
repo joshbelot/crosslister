@@ -25,7 +25,9 @@ import { logger } from '../services/logger';
 import { addPhotoFromFile, listPhotoRows } from '../services/photos';
 import { duplicateLabel, findDuplicates, type DuplicateMatch } from './duplicates';
 import { reverseCategory, reverseColors, reverseCondition } from './reverseMapping';
+import { restoreMarketplaceRows } from './backupImport';
 import { createUrlImporter } from './urlImporter';
+import type { ExportListing } from '../services/exporter';
 import type { DiscoveredItem, ImportedListing, MarketplaceImporter } from './types';
 
 export type { DiscoveredItem, ImportedListing, MarketplaceImporter } from './types';
@@ -281,6 +283,18 @@ function linkMarketplace(db: Db, listingId: string, mp: MarketplaceId, imp: Impo
   }
 }
 
+function backupPhotoMeta(exp: ExportListing, file: string) {
+  return exp.photos?.find((p) => p.file.endsWith(`/${path.basename(file)}`)) ?? null;
+}
+
+/** Fields a plain `createListing` does not restore: SKU (when unused), source and sold details. */
+function restoreBackupFields(db: Db, listingId: string, exp: ExportListing): void {
+  const taken = db.select().from(listings).where(eq(listings.sku, exp.sku)).get();
+  db.update(listings).set({
+    ...(taken ? {} : { sku: exp.sku }), source: exp.source, soldAt: exp.soldAt, soldMarketplaceId: exp.soldMarketplaceId, soldPriceCents: exp.soldPriceCents,
+  }).where(eq(listings.id, listingId)).run();
+}
+
 export async function commitItem(
   db: Db, itemId: string, input: { action: 'new' | 'merge' | 'skip'; targetListingId?: string; overrides?: ListingPatch },
 ): Promise<{ item: ItemRow; listing: ListingDetail | null }> {
@@ -289,6 +303,7 @@ export async function commitItem(
   const mp = item.marketplaceId as MarketplaceId;
   const imp = item.raw as ImportedListing;
   const mapped = (item.mapped ?? {}) as ListingPatch;
+  const isBackup = getBatchRow(db, item.batchId).method === 'backup';
 
   if (input.action === 'skip') {
     db.update(importItems).set({ state: 'skipped' }).where(eq(importItems.id, itemId)).run();
@@ -302,17 +317,24 @@ export async function commitItem(
     listingId = created.id;
     db.update(listings).set({ source: 'imported' }).where(eq(listings.id, listingId)).run();
     for (const [i, file] of item.photoPaths.entries()) {
-      const r = await addPhotoFromFile(db, listingId, file, `${String(i + 1).padStart(2, '0')}.jpg`);
+      const meta = isBackup ? backupPhotoMeta(item.raw as ExportListing, file) : null;
+      const r = await addPhotoFromFile(db, listingId, file, meta?.originalFilename ?? `${String(i + 1).padStart(2, '0')}.jpg`,
+        meta ? { rotation: meta.rotation as 0 | 90 | 180 | 270, crop: meta.crop } : {});
       if (r.error) logger.warn('IMPORT', r.error, { listingId });
     }
-    linkMarketplace(db, listingId, mp, imp, (input.overrides?.priceCents ?? mapped.priceCents) ?? null);
+    if (isBackup) {
+      restoreBackupFields(db, listingId, item.raw as ExportListing);
+      restoreMarketplaceRows(db, listingId, (item.raw as ExportListing).marketplaces, { merge: false });
+    } else {
+      linkMarketplace(db, listingId, mp, imp, (input.overrides?.priceCents ?? mapped.priceCents) ?? null);
+    }
     db.update(importItems).set({ state: 'imported', resultListingId: listingId }).where(eq(importItems.id, itemId)).run();
   } else {
     if (!input.targetListingId) throw new AppError('VALIDATION', 400, 'Choose which item to merge into.');
     const target = db.select().from(listings).where(eq(listings.id, input.targetListingId)).get();
     if (!target) throw notFound('Listing');
     listingId = target.id;
-    const linked = db.select().from(marketplaceListings).where(and(eq(marketplaceListings.listingId, listingId), eq(marketplaceListings.marketplaceId, mp))).get();
+    const linked = isBackup ? undefined : db.select().from(marketplaceListings).where(and(eq(marketplaceListings.listingId, listingId), eq(marketplaceListings.marketplaceId, mp))).get();
     if (linked && linked.remoteId && imp.remoteId && linked.remoteId !== imp.remoteId) {
       throw new AppError('ALREADY_LINKED', 409, `That item is already linked to a different ${MARKETPLACE_NAMES[mp]} listing.`);
     }
@@ -322,10 +344,14 @@ export async function commitItem(
       if (source[key] !== undefined && source[key] !== null && source[key] !== '' && isEmpty((target as unknown as Record<string, unknown>)[key])) fill[key] = source[key];
     }
     if (Object.keys(fill).length) db.update(listings).set({ ...fill, updatedAt: nowIso() }).where(eq(listings.id, listingId)).run();
+    if (isBackup) restoreMarketplaceRows(db, listingId, (item.raw as ExportListing).marketplaces, { merge: true });
     if (listPhotoRows(db, listingId).length === 0) {
-      for (const [i, file] of item.photoPaths.entries()) await addPhotoFromFile(db, listingId, file, `${String(i + 1).padStart(2, '0')}.jpg`);
+      for (const [i, file] of item.photoPaths.entries()) {
+        const meta = isBackup ? backupPhotoMeta(item.raw as ExportListing, file) : null;
+        await addPhotoFromFile(db, listingId, file, meta?.originalFilename ?? `${String(i + 1).padStart(2, '0')}.jpg`, meta ? { rotation: meta.rotation as 0 | 90 | 180 | 270, crop: meta.crop } : {});
+      }
     }
-    linkMarketplace(db, listingId, mp, imp, mapped.priceCents ?? null);
+    if (!isBackup) linkMarketplace(db, listingId, mp, imp, mapped.priceCents ?? null);
     db.update(importItems).set({ state: 'merged', resultListingId: listingId }).where(eq(importItems.id, itemId)).run();
   }
   recomputeListingStatus(db, listingId);
