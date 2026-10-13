@@ -4,7 +4,7 @@
 
 - macOS (Linux works for development, but HEIC photo conversion and the Keychain need a Mac)
 - Node.js 22 or newer — check with `node -v`
-- Google Chrome (recommended). Without it, run `npx playwright install chromium` once and choose **Playwright Chromium** under Settings → General → Browser.
+- Google Chrome (required for the browser marketplaces). Crosslister starts it with its own profile; your everyday Chrome profile is not touched.
 
 ## Install and first run
 
@@ -24,8 +24,10 @@ Open <http://localhost:5173>. The first start creates `data/`, `browser-profiles
 | `data/crosslister.db` | your inventory (SQLite) |
 | `data/listings/<id>/original/` | your original photos, never modified |
 | `data/backups/` | ZIP backups |
-| `browser-profiles/<marketplace>/` | the saved browser login for each marketplace |
+| `browser-profiles/chrome/` | the Chrome profile Crosslister uses (all marketplace logins) |
 | `logs/` | daily log files |
+
+Folders named `browser-profiles/mercari`, `poshmark`, … are left over from older versions and can be deleted.
 
 To store them elsewhere, copy `.env.example` to `.env` and set `CROSSLISTER_DATA_DIR` and `CROSSLISTER_PROFILES_DIR`, then restart.
 
@@ -51,7 +53,13 @@ eBay is the one marketplace that uses an official API, so it needs a one-time de
 
 ## Connect the browser marketplaces
 
-Settings → Marketplaces → **Connect**. A normal browser window opens at the marketplace's login page. Log in yourself, including two-factor codes — the app never sees your password. The window stays open while a job needs it and closes itself after a few idle minutes; your login is kept in `browser-profiles/<marketplace>/`. **Disconnect** deletes that saved session.
+Settings → Marketplaces → **Connect**. Crosslister opens its own Google Chrome window (separate from your everyday Chrome) with one tab per marketplace. Log in yourself, including two-factor codes — the app never sees your password. You only need to do this once per marketplace: the window can stay open, and the login is remembered even if you close it or restart the app. If the app doesn't notice that you are logged in, click **I'm logged in** on the card.
+
+## The Chrome window
+
+- Closing a marketplace tab while a job is running stops that job.
+- Quitting that Chrome window is fine — the app reopens it when needed.
+- The window listens on local port 9333 for the app (`CROSSLISTER_CDP_PORT` changes it) — only programs on your own Mac can reach it.
 
 ## Optional: AI suggestions with Ollama
 

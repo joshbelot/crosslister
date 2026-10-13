@@ -426,6 +426,8 @@ UI trigger: when the user saves edits to title/description/price of a listing th
 
 ### 8.1 Browser manager (`browserManager.ts`)
 
+> Superseded for real use by `13-round-2-fixes.md` §1 (one shared Chrome, attach mode). The text below describes launch mode, which tests still use.
+
 ```ts
 export const browserManager: {
   getContext(mp: MarketplaceId): Promise<BrowserContext>;

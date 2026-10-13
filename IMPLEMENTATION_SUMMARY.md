@@ -22,6 +22,7 @@ Crosslister is a personal, single-user, local-only crosslisting app for a Mac (F
 | M33–M34 (status checks, sale detection) | Done |
 | M35–M38 (AI) | Done (tested with injected/mocked providers only) |
 | M39 (docs and summary) | Done |
+| M40–M43 (round 2: shared Chrome window, login detection, small fixes) | Done |
 
 ## How to run
 
@@ -115,10 +116,14 @@ tests/                          unit/integration per area (shared, db, listings,
 - **Status checks (M33):** browser adapters implement `checkStatus` through `browserCheckStatus` (JSON-LD availability → sold badge → 404/"not found" text); a login wall returns `unknown`. When several listings of one marketplace are checked at once, later jobs wait 5–10 s first. A pending check for the same listing + marketplace is never duplicated.
 - **Sale banner (M34):** `ListingSummary` gained `saleDetectedMarketplaceId` so the global banner can list affected items without loading every detail; the per-page banner on the detail view was removed in favour of the global one. A `registerTick` hook in the job runner (every 60 s) drives eBay polling; the last poll time is stored in the settings table (`ebay_last_poll`).
 - **AI (M35–M38):** providers use plain `fetch` with a 120 s timeout. Titles are filtered server-side for length and for words that are not in the item facts, the category labels or a small filler list. Marketplace copy is cut at the marketplace's limits (descriptions at a word boundary) rather than rejected. AI request errors are `AI_ERROR` (502); a disabled provider is `AI_DISABLED` (400). The UI hides every ✨ button when AI is off.
+- **Shared Chrome (M40):** `browserManager` has two modes. `attach` (default) starts the installed Google Chrome as a detached process with its own profile (`browser-profiles/chrome/`) and a local debugging port, attaches over CDP, and gives each marketplace one tab; `launch` (headless, `CROSSLISTER_CHROMIUM_PATH`, `CROSSLISTER_BROWSER_MODE=launch`, and all unit/browser tests) keeps the round-1 Playwright-launched context per marketplace. Env variables: `CROSSLISTER_BROWSER_MODE`, `CROSSLISTER_CHROME_PATH`, `CROSSLISTER_CDP_PORT` (default 9333), `CROSSLISTER_CHROME_HEADLESS` (tests). Chrome is started detached and survives app restarts. Disconnect deletes that site's cookies (per adapter `hosts`) and closes its tab. Tabs left over from before an app restart are not adopted; new tabs are opened.
+- **Depop parcel-size warning test (M42):** `depopAdapter.validate` is called with `as never` in `tests/marketplace/depop/mapping.test.ts` because the test's `eff()` helper returns an untyped-data `EffectiveListing`.
 
 ## Known bugs / gaps
 
 - **Browser adapters are uncalibrated against live sites** (Mercari, Poshmark, Depop, Facebook, Grailed): expect to adjust selectors, category trees and shop-scan link patterns on first real use.
+- Attach mode (the real Chrome window) is covered by `tests/browser/attach.test.ts` with headless Chromium only; the marketplace flows themselves are still tested in launch mode against fixtures.
+- Depop loading in the shared Chrome window has not been confirmed on a real account.
 - **eBay** was never run against production or sandbox; the full flow is covered by mocked-HTTP tests only.
 - **AI** was tested with injected and mocked providers only; real Ollama / LM Studio / Anthropic behaviour (model output quality, vision support of the chosen model) is unverified.
 - No per-adapter `extractExtra` selectors exist, so imports from browser marketplaces rely on JSON-LD/OpenGraph data; category, size and condition may need to be chosen in the review step.

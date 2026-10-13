@@ -5,7 +5,7 @@ A free, self-hosted crosslisting app for one person: create a listing once (phot
 **How each marketplace works**
 
 - **eBay** uses eBay's official API.
-- **Mercari, Poshmark, Depop, Facebook Marketplace and Grailed** are *assisted*: the app opens the marketplace in a browser window (where you are logged in), fills in the listing, and **you click Publish**.
+- **Mercari, Poshmark, Depop, Facebook Marketplace and Grailed** are *assisted*: the app opens the marketplace as a tab in its own Google Chrome window (you log in there once per marketplace and stay logged in), fills in the listing, and **you click Publish**.
 - **Vinted, OfferUp, Etsy and "Other"** are *manual-assist*: one-click copy of every field, a ready photo folder, and the app records the listing link.
 
 > **Important — marketplace terms.** Some marketplaces (notably Poshmark) restrict automated tools in their terms. Crosslister only works in a visible browser window on your own account, never solves CAPTCHAs or hides that it is automated, and by default leaves the final click to you. You are responsible for following each marketplace's rules.
@@ -39,7 +39,7 @@ Then open <http://localhost:5173>. (Production-style: `npm run build && npm star
 
 ## Connect marketplaces
 
-Open **Settings → Marketplaces** and click **Connect** next to a marketplace. A browser window opens at its login page; log in yourself (including any verification codes). The window keeps the session so you only do this once. eBay needs a one-time developer setup — see [docs/SETUP.md](docs/SETUP.md).
+Open **Settings → Marketplaces** and click **Connect** next to a marketplace. Crosslister's own Google Chrome window opens a tab at the marketplace; log in yourself (including any verification codes). The window keeps the session so you only do this once. eBay needs a one-time developer setup — see [docs/SETUP.md](docs/SETUP.md).
 
 ## Cross-list
 
@@ -73,7 +73,7 @@ Turn on AI in **Settings → AI** (a local model through Ollama is free; see [do
 **Settings → Backup & Export** creates a full ZIP backup (database plus original photos), and exports JSON or CSV. Your data lives in three folders next to the app:
 
 - `data/` — the database, photos, backups
-- `browser-profiles/` — saved marketplace logins (never included in backups)
+- `browser-profiles/chrome/` — the Chrome profile Crosslister uses, including your marketplace logins (never included in backups)
 - `logs/` — daily log files (also on the **Logs** page)
 
 ## More

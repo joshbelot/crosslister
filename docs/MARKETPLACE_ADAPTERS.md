@@ -89,6 +89,8 @@ These flows are tested against fixture pages only (**assisted, uncalibrated**). 
 
 ## Calibration
 
+The calibration script uses the same Chrome window and logins as the app.
+
 The selectors, labels and category trees in the adapters are best-effort knowledge of the live sites and were **not verified against them**. The tests use local HTML fixtures, which verify the app's flow logic and helpers — **not** accuracy against the real sites.
 
 On your Mac, with Crosslister **not running**:

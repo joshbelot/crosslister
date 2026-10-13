@@ -8,9 +8,13 @@ Each entry is *symptom → cause → fix*.
 
 **Photos won't upload.** → The file is over 50 MB, is not JPG/PNG/WEBP/HEIC, the listing already has 24 photos, or it is a HEIC file on a non-Mac. → Resize or convert the photo (export HEIC as JPEG).
 
-**The browser window doesn't open.** → Google Chrome is missing. → Settings → General → Browser → **Playwright Chromium**, then run `npx playwright install chromium`.
+**The Chrome window doesn't open.** → Google Chrome is not installed, or the app could not start it. → Install Google Chrome. If it is installed in an unusual place, set `CROSSLISTER_CHROME_PATH` in `.env`. If another program uses port 9333, set `CROSSLISTER_CDP_PORT=9444`.
 
-**"The browser profile is in use."** → Another Crosslister process (or `npm run calibrate`) has the marketplace's browser open. → Quit it and try again.
+**"Couldn't start Google Chrome for Crosslister."** → A leftover Crosslister Chrome is half-open. → Quit that Chrome window (the one with the marketplace tabs) and try again.
+
+**I'm logged in but the app keeps asking.** → The app's way of recognising a logged-in page is out of date for that marketplace. → Click **I'm logged in** on the card; the app remembers it. Then run `npm run calibrate -- <marketplace> home` to fix the selector.
+
+**"<Marketplace> didn't load".** → The marketplace showed an error page (often a temporary block or rate limit). → Reload the tab in the Chrome window, or wait a few minutes; when the page looks normal click **Continue**.
 
 **Stuck on a login page.** → The marketplace wants a verification code or security check. → Complete it in the browser window yourself, then click **Continue** on the card in Activity. The app never touches CAPTCHAs or verification widgets.
 
