@@ -66,6 +66,25 @@ describe.skipIf(!process.env.RUN_BROWSER_TESTS)('depop adapter (fixtures — ass
     expect((await job(jobId)).state).toBe('SUCCESS');
   }, 120_000);
 
+  it('believes the user when the logged-in indicator is missing, and does not ask a second time', async () => {
+    await setAutoSubmit(t.app, 'depop', true);
+    await req(t.app, 'POST', '/api/marketplaces/depop/disconnect');   // connection status → logged_out
+    urls('?missing=nav');
+    await fakeLogin('depop', env.fixtureUrl);
+    const { jobId } = await start();
+    const run = runner.runOnce(t.db);
+    const waiting = await waitFor(async () => { const j = await job(jobId); return j.state === 'NEEDS_USER' ? j : null; }, 60_000);
+    expect(waiting.needsUser.reason).toBe('login');
+    await req(t.app, 'POST', `/api/jobs/${jobId}/continue`, {});
+    await run;
+    expect((await job(jobId)).state).toBe('SUCCESS');
+
+    // The login was confirmed once, so the next job goes straight through.
+    const second = await start();
+    await runner.runOnce(t.db);
+    expect((await job(second.jobId)).state).toBe('SUCCESS');
+  }, 120_000);
+
   it('deactivate: deletes the listing; a missing delete button falls back to the user', async () => {
     await setAutoSubmit(t.app, 'depop', true);
     await fakeLogin('depop', env.fixtureUrl);

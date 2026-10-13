@@ -8,7 +8,7 @@ import { exists } from '../../browser/locators';
 import { bestMatch } from '../../browser/match';
 import { AdapterError } from '../adapterError';
 import {
-  browserCommonData, browserCommonDataFields, ensureLoggedIn, hostOk, mapCondition, pollUntil, resolveUrl, runBrowserDeactivate, runBrowserPublish,
+  browserCommonData, browserCommonDataFields, ensureLoggedIn, gotoChecked, hostOk, mapCondition, pollUntil, resolveUrl, runBrowserDeactivate, runBrowserPublish,
   runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
 } from '../common';
 import { getKv } from '../../services/settings';
@@ -123,7 +123,7 @@ export const facebookAdapter: BrowserAdapter<FacebookData> = {
   async connect(ctx) {
     const page = await ctx.page();
     const home = resolveUrl('facebook', 'home', this.urls.home);
-    await ctx.step('open', 'Opening Facebook', () => page.goto(home, { waitUntil: 'domcontentloaded' }));
+    await ctx.step('open', 'Opening Facebook', () => gotoChecked(ctx, facebookAdapter, page, home));
     await ctx.step('login', 'Checking login', () => ensureLoggedIn(ctx, facebookAdapter, page, home));
     return { status: 'connected', accountName: null, message: null };
   },

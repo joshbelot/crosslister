@@ -8,7 +8,7 @@ import type { CopyField, DataFieldDef, MarketplaceListing, NeedsUserRequest } fr
 import { click, pace } from '../browser/actions';
 import { exists, type LocatorSpec } from '../browser/locators';
 import type { Db } from '../db/client';
-import { upsertConnection } from '../services/connectionStore';
+import { getConnection, upsertConnection } from '../services/connectionStore';
 import type { JobContext } from '../services/jobContext';
 import { getKv } from '../services/settings';
 import { extractProduct } from '../browser/extract';
@@ -214,18 +214,63 @@ async function handleChallenge<T>(ctx: JobContext, adapter: BrowserAdapter<T>, p
   }, pollEvery2s(async () => !(await exists(page, ci, 1000))));
 }
 
+/** Same page? Compares origin + path, ignoring a trailing slash, the query and the hash. */
+function samePage(a: string, b: string): boolean {
+  try {
+    const x = new URL(a);
+    const y = new URL(b);
+    return x.origin === y.origin && x.pathname.replace(/\/$/, '') === y.pathname.replace(/\/$/, '');
+  } catch {
+    return false;
+  }
+}
+
+/** True when the page is on (or within `ms` gets redirected to) the marketplace's login page. */
+async function onLoginPage<T>(adapter: BrowserAdapter<T>, page: Page, ms: number): Promise<boolean> {
+  const deadline = Date.now() + ms;
+  for (;;) {
+    if (adapter.auth.loginUrlPattern.test(page.url())) return true;
+    if (Date.now() >= deadline) return false;
+    await page.waitForTimeout(250);
+  }
+}
+
+/**
+ * Login check that does not depend on the (uncalibrated) logged-in indicator being right:
+ *   1. on a login URL                         → logged out
+ *   2. indicator visible                      → logged in
+ *   3. neither: open the sell page (it redirects to login when logged out)
+ *        - redirected to login                → logged out
+ *        - not redirected, and the user has confirmed a login for this marketplace before → logged in
+ *        - not redirected, never confirmed    → ask the user once
+ * When the user clicks "I'm logged in", they are believed unless the marketplace sends them back to its login page.
+ */
 export async function ensureLoggedIn<T>(ctx: JobContext, adapter: BrowserAdapter<T>, page: Page, returnUrl: string): Promise<void> {
   await handleChallenge(ctx, adapter, page);
   if (await isLoggedIn(adapter, page)) { upsertConnection(ctx.db, adapter.id, { status: 'connected' }); return; }
-  await page.goto(resolveUrl(adapter.id, 'login', adapter.auth.loginUrl), { waitUntil: 'domcontentloaded' });
+
+  if (!adapter.auth.loginUrlPattern.test(page.url())) {
+    const sellUrl = resolveUrl(adapter.id, 'sell', adapter.urls.sell);
+    if (!samePage(page.url(), sellUrl)) await page.goto(sellUrl, { waitUntil: 'domcontentloaded' });
+    const redirected = await onLoginPage(adapter, page, 3000);
+    if (!redirected && getConnection(ctx.db, adapter.id)?.status === 'connected') {
+      ctx.log.warn(`Couldn't find the logged-in indicator on ${adapter.name}; continuing because the sell page did not ask for a login.`);
+      if (!samePage(page.url(), returnUrl)) await page.goto(returnUrl, { waitUntil: 'domcontentloaded' });
+      return;
+    }
+  }
+
+  if (!adapter.auth.loginUrlPattern.test(page.url())) {
+    await page.goto(resolveUrl(adapter.id, 'login', adapter.auth.loginUrl), { waitUntil: 'domcontentloaded' });
+  }
   await ctx.requestUserUntil({
     reason: 'login', title: `Log in to ${adapter.name}`,
-    instructions: `Log in to ${adapter.name} in the browser window. Complete any verification codes or security checks yourself — the app never sees your password. The app continues automatically once you're logged in.`,
+    instructions: `Log in to ${adapter.name} in the Chrome window that Crosslister opened. Complete any verification codes or security checks yourself — the app never sees your password. If you are already logged in there, just click “I'm logged in”.`,
     primaryAction: "I'm logged in",
   }, pollEvery2s(() => isLoggedIn(adapter, page)));
   await page.goto(returnUrl, { waitUntil: 'domcontentloaded' });
   await handleChallenge(ctx, adapter, page);
-  if (!(await isLoggedIn(adapter, page))) throw adapterError('LOGIN_REQUIRED', null);
+  if (!(await isLoggedIn(adapter, page)) && (await onLoginPage(adapter, page, 3000))) throw adapterError('LOGIN_REQUIRED', null);
   upsertConnection(ctx.db, adapter.id, { status: 'connected' });
 }
 
@@ -258,12 +303,25 @@ async function resultFromUser<TData>(
   return { remoteId: null, url: null, verified: false };
 }
 
+/** Opens `url`. If the marketplace answers with an error page (blocked, rate-limited, down), pause for the user instead of failing on a missing control. A 404 is left to the caller. */
+export async function gotoChecked<T>(ctx: JobContext, adapter: BrowserAdapter<T>, page: Page, url: string): Promise<void> {
+  const resp = await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const status = resp?.status() ?? 200;
+  if (status < 400 || status === 404) return;
+  ctx.log.warn(`${adapter.name} answered HTTP ${status} for ${url}`);
+  await ctx.requestUser({
+    reason: 'other', title: `${adapter.name} didn't load`,
+    instructions: `${adapter.name} showed an error page (code ${status}) instead of the page the app asked for. In the Chrome window, reload the tab or open ${adapter.name} yourself and log in. When the page looks normal, click Continue.`,
+    primaryAction: 'Continue',
+  });
+}
+
 export async function runBrowserPublish<TData>(ctx: JobContext, adapter: BrowserAdapter<TData>, l: EffectiveListing<TData>, r: BrowserRecipe<TData>): Promise<PublishResult> {
   const N = adapter.name;
   const sellUrl = resolveUrl(adapter.id, 'sell', adapter.urls.sell);
   const page = await ctx.step('open', `Opening ${N}`, async () => {
     const p = await ctx.page();
-    await p.goto(sellUrl, { waitUntil: 'domcontentloaded' });
+    await gotoChecked(ctx, adapter, p, sellUrl);
     return p;
   });
   await ctx.step('login', 'Checking login', () => ensureLoggedIn(ctx, adapter, page, sellUrl));
@@ -328,7 +386,7 @@ export async function runBrowserDeactivate<T>(ctx: JobContext, adapter: BrowserA
   const url = r.editUrl(ml);
   const page = await ctx.step('open', `Opening ${N}`, async () => {
     const p = await ctx.page();
-    await p.goto(url, { waitUntil: 'domcontentloaded' });
+    await gotoChecked(ctx, adapter, p, url);
     return p;
   });
   await ctx.step('login', 'Checking login', () => ensureLoggedIn(ctx, adapter, page, url));
@@ -388,7 +446,7 @@ export async function runBrowserUpdate<TData>(
   const url = r.editUrl(ml);
   const page = await ctx.step('open', `Opening ${N}`, async () => {
     const p = await ctx.page();
-    await p.goto(url, { waitUntil: 'domcontentloaded' });
+    await gotoChecked(ctx, adapter, p, url);
     return p;
   });
   await ctx.step('login', 'Checking login', () => ensureLoggedIn(ctx, adapter, page, url));

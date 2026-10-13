@@ -4,7 +4,7 @@
 <style>body{font-family:sans-serif;padding:12px} .row{margin:8px 0} ul[role=listbox],ul[role=menu]{border:1px solid #999;list-style:none;padding:4px;background:#fff} [hidden]{display:none!important} li{cursor:pointer;padding:2px 6px}</style>
 <script>Fixture.requireLogin('/depop/login.html');</script></head>
 <body>
-  <nav><a href="/depop/sell.html">Profile</a></nav>
+  <nav data-fixture-id="nav"><a href="/depop/sell.html">Profile</a></nav>
   <h1>Sell an item</h1>
   <div class="row" data-fixture-id="photos"><input type="file" id="photos" multiple accept="image/*" style="display:none" /><div id="previews"></div></div>
   <div class="row" data-fixture-id="description"><label for="desc">Description</label><textarea id="desc" name="description"></textarea></div>

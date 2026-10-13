@@ -20,7 +20,7 @@ export const sel = {
     candidates: [{ css: '[role="dialog"] button:text-matches("^(delete|yes|confirm)", "i")' }, { role: 'button', name: /^(delete|yes|confirm)/i }],
   },
   loggedIn: { what: 'logged-in indicator', candidates: [{ role: 'link', name: /my items|profile|account/i }, { css: '[data-testid*="avatar" i]' }] },
-  challenge: { what: 'verification prompt', candidates: [{ text: /verify|verification code|confirm it's you/i }] },
+  challenge: { what: 'verification prompt', candidates: [{ text: /verification code|verify (it's|that it's) you|verify your (identity|account|email|phone)|confirm it's you|security check/i }] },
 } satisfies Record<string, LocatorSpec>;
 
 export const selectorGroups: Record<'sell' | 'edit' | 'item' | 'home', LocatorSpec[]> = {

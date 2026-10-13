@@ -6,7 +6,7 @@ import type { MarketplaceCapabilities, MarketplaceListing, ValidationIssue } fro
 import { chooseOption, choosePath, click, fillText, typeahead, uploadFiles } from '../../browser/actions';
 import { exists } from '../../browser/locators';
 import {
-  browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapCondition, pollUntil,
+  browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, gotoChecked, hostOk, mapCondition, pollUntil,
   resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
   browserCheckStatus,
 } from '../common';
@@ -87,7 +87,7 @@ export const grailedAdapter: BrowserAdapter<GrailedData> = {
   async connect(ctx) {
     const page = await ctx.page();
     const home = resolveUrl('grailed', 'home', this.urls.home);
-    await ctx.step('open', 'Opening Grailed', () => page.goto(home, { waitUntil: 'domcontentloaded' }));
+    await ctx.step('open', 'Opening Grailed', () => gotoChecked(ctx, grailedAdapter, page, home));
     await ctx.step('login', 'Checking login', () => ensureLoggedIn(ctx, grailedAdapter, page, home));
     return { status: 'connected', accountName: null, message: null };
   },

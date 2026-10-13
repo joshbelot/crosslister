@@ -5,7 +5,7 @@ import type { MarketplaceCapabilities, MarketplaceListing } from '../../../share
 import { chooseMany, chooseOption, choosePath, chooseRadio, click, fillText, typeahead, uploadFiles } from '../../browser/actions';
 import { exists } from '../../browser/locators';
 import {
-  browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, hostOk, mapColors, mapCondition,
+  browserCommonData, browserCommonDataFields, categoryPathFor, detectByUrlOrLink, ensureLoggedIn, gotoChecked, hostOk, mapColors, mapCondition,
   pollUntil, resolveCategoryPath, resolveUrl, runBrowserDeactivate, runBrowserPublish, runBrowserUpdate, type BrowserRecipe, type DeactivateRecipe, type UpdateRecipe,
   browserCheckStatus,
 } from '../common';
@@ -93,7 +93,7 @@ export const depopAdapter: BrowserAdapter<DepopData> = {
   async connect(ctx) {
     const page = await ctx.page();
     const home = resolveUrl('depop', 'home', this.urls.home);
-    await ctx.step('open', 'Opening Depop', () => page.goto(home, { waitUntil: 'domcontentloaded' }));
+    await ctx.step('open', 'Opening Depop', () => gotoChecked(ctx, depopAdapter, page, home));
     await ctx.step('login', 'Checking login', () => ensureLoggedIn(ctx, depopAdapter, page, home));
     return { status: 'connected', accountName: null, message: null };
   },
