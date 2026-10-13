@@ -64,7 +64,12 @@ export const depopAdapter: BrowserAdapter<DepopData> = {
   },
 
   validate(l) {
-    return l.colors.length > 2 ? [{ field: 'colors', severity: 'warning' as const, message: 'Depop accepts up to 2 colors.' }] : [];
+    const issues: Array<{ field: string; severity: 'warning'; message: string }> = [];
+    if (l.colors.length > 2) issues.push({ field: 'colors', severity: 'warning', message: 'Depop accepts up to 2 colors.' });
+    if (depopParcelSize(l.shipping.weightOz) === null) {
+      issues.push({ field: 'shipping.weightOz', severity: 'warning', message: 'Add the package weight (Shipping → Weight) so the app can choose the Depop parcel size for you.' });
+    }
+    return issues;
   },
 
   describeMapping(l) {

@@ -65,4 +65,9 @@ describe('depop mapping', () => {
     expect(depopAdapter.capabilities).toMatchObject({ titleMaxLength: null, descriptionMaxLength: 1000, maxPhotos: 8 });
     expect(depopAdapter.photoSpec.maxLongEdge).toBe(1600);
   });
+  it('warns when there is no package weight for the parcel size', () => {
+    const noWeight = eff({ shipping: { weightOz: null, lengthIn: null, widthIn: null, heightIn: null, whoPays: 'buyer' } });
+    expect(depopAdapter.validate(noWeight as never).some((i) => /package weight/.test(i.message))).toBe(true);
+    expect(depopAdapter.validate(eff() as never).some((i) => /package weight/.test(i.message))).toBe(false);
+  });
 });

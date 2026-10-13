@@ -123,7 +123,7 @@ export function CrosslistFlow({ listingId, selected, open, onClose, focusField, 
                   {isOpen && (
                     <div className="space-y-1 bg-zinc-50 px-11 py-2 text-sm">
                       {info && info.kind === 'browser' && info.connection.status !== 'connected' && <p className="text-zinc-600">Not connected — you'll be asked to log in.</p>}
-                      {own.length === 0 && <p className="text-zinc-500">No issues.</p>}
+                      {own.length === 0 && <p className="text-zinc-500">{st === 'error' ? 'Nothing else needed here — fix the items at the top first.' : 'No issues.'}</p>}
                       {own.map((i, idx) => (
                         <div key={idx} className="flex items-center justify-between gap-3">
                           <span className={i.severity === 'error' ? 'text-red-700' : 'text-amber-700'}>{i.severity === 'error' ? '✗' : '⚠'} {i.message}</span>

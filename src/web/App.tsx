@@ -13,6 +13,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <InventoryPage /> },
       { path: '/new', element: <Navigate to="/listings/new/edit" replace /> },
+      { path: '/listings/new', element: <Navigate to="/listings/new/edit" replace /> },
       { path: '/listings/:id/edit', element: <ListingEditorPage /> },
       { path: '/listings/:id', element: <ListingDetailPage /> },
       { path: '/import', element: <ImportPage /> },
