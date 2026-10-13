@@ -18,6 +18,7 @@ This folder is a complete, step-by-step build plan. An implementing agent should
 | [10-export-backup.md](10-export-backup.md) | JSON/CSV export, ZIP backup, restore |
 | [11-testing.md](11-testing.md) | Test setup and the exact test cases required |
 | [12-docs-and-delivery.md](12-docs-and-delivery.md) | Documentation to write, `IMPLEMENTATION_SUMMARY.md` template, definition of done |
+| [13-round-2-fixes.md](13-round-2-fixes.md) | Round 2 (after first real use): one shared Chrome window, login detection, small fixes |
 
 Background: [`../MARKETPLACE_RESEARCH.md`](../MARKETPLACE_RESEARCH.md) (why each marketplace is built the way it is) and [`../ARCHITECTURE.md`](../ARCHITECTURE.md) (decision table).
 
@@ -111,5 +112,16 @@ Each milestone lists the spec sections it implements. "Done when" items are mand
 | # | Milestone | Spec |
 |---|---|---|
 | M39 | Final docs + `IMPLEMENTATION_SUMMARY.md` | 12 |
+
+### Round 2 — Fixes after first real use
+
+All four are specified in [13-round-2-fixes.md](13-round-2-fixes.md). Where it disagrees with files 01–12, file 13 wins.
+
+| # | Milestone | Spec | Done when |
+|---|---|---|---|
+| M40 | One shared Chrome window (attach mode) | 13 §1 | Connect on two marketplaces opens two tabs in one Chrome window; `attach.test.ts` passes. |
+| M41 | Login detection that survives wrong selectors | 13 §2 | New Depop fixture test passes; all browser tests pass. |
+| M42 | Small fixes (route, validation text, Depop weight warning) | 13 §3 | `/listings/new` opens the editor; tests pass. |
+| M43 | Round 2 docs | 13 §4 | Docs updated; summary updated. |
 
 Stopping point: if time is limited, finish whole milestones in order. Phase 1 + Phase 2 is the minimum useful product; Phase 3 delivers the success criteria.
