@@ -71,6 +71,7 @@ export const facebookAdapter: BrowserAdapter<FacebookData> = {
   id: 'facebook',
   name: 'Facebook Marketplace',
   kind: 'browser',
+  hosts: FACEBOOK_HOSTS,
   capabilities,
   photoSpec: { maxPhotos: 10, maxLongEdge: 2048, quality: 88 },
   urls: {

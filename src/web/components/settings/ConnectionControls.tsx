@@ -26,7 +26,7 @@ export function ConnectionControls({ info }: { info: MarketplaceInfo }) {
           {connected ? 'Log in again' : 'Connect'}
         </button>
         <button className="btn btn-secondary btn-sm" disabled={disconnect.isPending || c.status === 'logged_out'}
-          onClick={() => { if (window.confirm(`This deletes the saved browser session for ${info.name}. You'll need to log in again.`)) disconnect.mutate(info.id); }}>
+          onClick={() => { if (window.confirm(`This logs Crosslister's Chrome window out of ${info.name}. You'll need to log in there again.`)) disconnect.mutate(info.id); }}>
           <LogOut size={13} /> Disconnect
         </button>
       </div>

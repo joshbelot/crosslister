@@ -54,13 +54,11 @@ export function GeneralTab({ s }: { s: SettingsDraft }) {
 
       <section>
         <h3 className="mb-3 font-semibold">Browser</h3>
-        <div className="space-y-2 text-sm" role="radiogroup" aria-label="Browser">
-          {([['chrome', 'Google Chrome (recommended)'], ['chromium', 'Playwright Chromium']] as const).map(([v, label]) => (
-            <label key={v} className="flex items-center gap-2"><input type="radio" name="browser-channel" checked={d.browser.channel === v} onChange={() => s.update((x) => { x.browser.channel = v; return x; })} /> {label}</label>
-          ))}
-        </div>
+        <p className="text-sm text-zinc-600">
+          Crosslister opens its own Google Chrome window with a separate profile. Every marketplace is a tab in that window. Log in once per marketplace and you stay logged in, even after restarting the app.
+        </p>
         <div className="mt-3 flex items-center gap-2 text-sm">
-          Close idle browser windows after
+          Close idle marketplace tabs after
           <input className="input h-9 w-20" type="number" min={1} max={240} value={d.browser.closeIdleMinutes} aria-label="Idle minutes"
             onChange={(e) => s.update((x) => { x.browser.closeIdleMinutes = Math.min(240, Math.max(1, Number(e.target.value) || 1)); return x; })} /> minutes
         </div>

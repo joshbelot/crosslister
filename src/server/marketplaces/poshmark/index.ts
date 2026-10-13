@@ -39,6 +39,7 @@ export const poshmarkAdapter: BrowserAdapter<PoshmarkData> = {
   id: 'poshmark',
   name: 'Poshmark',
   kind: 'browser',
+  hosts: POSHMARK_HOSTS,
   capabilities,
   photoSpec: { maxPhotos: 16, maxLongEdge: 2048, quality: 88 },
   urls: { home: 'https://poshmark.com/', sell: 'https://poshmark.com/create-listing', login: 'https://poshmark.com/login' },

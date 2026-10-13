@@ -39,6 +39,7 @@ export const depopAdapter: BrowserAdapter<DepopData> = {
   id: 'depop',
   name: 'Depop',
   kind: 'browser',
+  hosts: DEPOP_HOSTS,
   capabilities,
   photoSpec: { maxPhotos: 8, maxLongEdge: 1600, quality: 88 },
   urls: { home: 'https://www.depop.com/', sell: 'https://www.depop.com/products/create/', login: 'https://www.depop.com/login/' },

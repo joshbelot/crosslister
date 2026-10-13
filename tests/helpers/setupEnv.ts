@@ -16,3 +16,5 @@ process.env.EBAY_ENV = 'production';
 process.env.EBAY_CLIENT_ID = 'test-client-id';
 process.env.EBAY_CLIENT_SECRET = 'test-client-secret';
 process.env.EBAY_RUNAME = 'Test-RuName-123';
+
+process.env.CROSSLISTER_BROWSER_MODE = 'launch';

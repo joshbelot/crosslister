@@ -85,6 +85,7 @@ export interface MarketplaceAdapter<TData = Record<string, unknown>> {
 
 export interface BrowserAdapter<TData = Record<string, unknown>> extends MarketplaceAdapter<TData> {
   kind: 'browser';
+  hosts: string[];                                // host suffixes of the marketplace's own site, e.g. ['depop.com']
   auth: { loginUrl: string; loginUrlPattern: RegExp; loggedInIndicator: LocatorSpec; challengeIndicator?: LocatorSpec };
   listingPathRegex: RegExp;                       // capture group 1 = remote id
   selectorGroups: Record<'sell' | 'edit' | 'item' | 'home', LocatorSpec[]>;

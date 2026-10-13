@@ -45,6 +45,7 @@ export const grailedAdapter: BrowserAdapter<GrailedData> = {
   id: 'grailed',
   name: 'Grailed',
   kind: 'browser',
+  hosts: GRAILED_HOSTS,
   capabilities,
   photoSpec: { maxPhotos: 8, maxLongEdge: 2048, quality: 88 },
   urls: { home: 'https://www.grailed.com/', sell: 'https://www.grailed.com/sell/new', login: 'https://www.grailed.com/users/sign_up' },

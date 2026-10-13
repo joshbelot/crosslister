@@ -38,6 +38,7 @@ export const mercariAdapter: BrowserAdapter<MercariData> = {
   id: 'mercari',
   name: 'Mercari',
   kind: 'browser',
+  hosts: MERCARI_HOSTS,
   capabilities,
   photoSpec: { maxPhotos: 12, maxLongEdge: 2048, quality: 88 },
   urls: { home: 'https://www.mercari.com/', sell: 'https://www.mercari.com/sell/', login: 'https://www.mercari.com/login/' },

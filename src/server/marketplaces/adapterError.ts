@@ -1,7 +1,7 @@
 // Leaf module (imports nothing from the app) so any adapter file can use the error types without import cycles.
 export type AdapterErrorCode =
   | 'LOGIN_REQUIRED' | 'NOT_CONNECTED' | 'NOT_CONFIGURED' | 'ELEMENT_NOT_FOUND' | 'OPTION_NOT_FOUND' | 'FILL_FAILED'
-  | 'CATEGORY_NOT_SELECTABLE' | 'UPLOAD_FAILED' | 'PUBLISH_NOT_CONFIRMED' | 'BROWSER_CLOSED' | 'NETWORK' | 'TIMEOUT'
+  | 'CATEGORY_NOT_SELECTABLE' | 'UPLOAD_FAILED' | 'PUBLISH_NOT_CONFIRMED' | 'BROWSER_CLOSED' | 'CHROME_NOT_FOUND' | 'BROWSER_START_FAILED' | 'NETWORK' | 'TIMEOUT'
   | 'API_ERROR' | 'DAILY_LIMIT' | 'CANCELLED' | 'APP_RESTARTED' | 'UNKNOWN';
 
 export class AdapterError extends Error {
@@ -25,7 +25,9 @@ export function errorMessage(code: AdapterErrorCode, N: string, p: ErrorParams =
     case 'CATEGORY_NOT_SELECTABLE': return 'The category could not be selected automatically.';
     case 'UPLOAD_FAILED': return `Photos could not be uploaded to ${N}.`;
     case 'PUBLISH_NOT_CONFIRMED': return `The app couldn't confirm that the listing was published on ${N}.`;
-    case 'BROWSER_CLOSED': return `The ${N} browser window was closed before the job finished.`;
+    case 'BROWSER_CLOSED': return `The ${N} tab or the browser window was closed before the job finished.`;
+    case 'CHROME_NOT_FOUND': return 'Google Chrome is not installed. Install it from google.com/chrome, then try again.';
+    case 'BROWSER_START_FAILED': return "Couldn't start Google Chrome for Crosslister. Quit the Chrome window that Crosslister opened (if any) and try again.";
     case 'NETWORK': return `Couldn't reach ${N}. Check your internet connection.`;
     case 'TIMEOUT': return `${N} took too long to respond.`;
     case 'API_ERROR': return `${N} returned an error: ${p.detail ?? 'unknown error'}`;

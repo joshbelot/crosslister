@@ -1,10 +1,11 @@
 import readline from 'node:readline/promises';
-import { chromium } from 'playwright';
+import type { Page } from 'playwright';
 import { MARKETPLACE_IDS, type MarketplaceId } from '../../shared/constants';
+import { browserManager } from '../browser/browserManager';
 import { exists } from '../browser/locators';
 import { getAdapter } from '../marketplaces/registry';
 import type { BrowserAdapter } from '../marketplaces/types';
-import { profileDir, ensureDirs } from '../paths';
+import { ensureDirs } from '../paths';
 import { resolveUrl } from '../marketplaces/common';
 
 const [, , idArg, pageArg = 'sell'] = process.argv;
@@ -30,22 +31,12 @@ else if (pageArg.startsWith('edit:')) { groupKey = 'edit'; url = adapter.listing
 else url = resolveUrl(mp, 'sell', adapter.urls.sell);
 
 ensureDirs();
-let context;
+let page: Page;
 try {
-  context = await chromium.launchPersistentContext(profileDir(mp), {
-    headless: false, viewport: null, args: ['--window-size=1280,900'],
-    ...(process.env.CROSSLISTER_CHROMIUM_PATH ? { executablePath: process.env.CROSSLISTER_CHROMIUM_PATH } : { channel: 'chrome' as const }),
-  });
+  page = await browserManager.getPage(mp);
 } catch (err) {
-  const msg = (err as Error).message;
-  if (/ProcessSingleton|profile|already in use|SingletonLock/i.test(msg)) fail('Quit Crosslister first (the browser profile is in use).');
-  try {
-    context = await chromium.launchPersistentContext(profileDir(mp), { headless: false, viewport: null, args: ['--window-size=1280,900'] });
-  } catch (err2) {
-    fail(`Could not open the browser: ${(err2 as Error).message.split('\n')[0]}`);
-  }
+  fail(`Could not open the browser: ${(err as Error).message.split('\n')[0]}`);
 }
-const page = context.pages()[0] ?? (await context.newPage());
 await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => undefined);
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -68,4 +59,4 @@ for (;;) {
   if (again === 'done' || again === 'quit' || again === 'q') break;
 }
 rl.close();
-await context.close();
+await browserManager.closeAll();
