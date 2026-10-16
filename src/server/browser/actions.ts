@@ -4,6 +4,7 @@ import type { JobContext } from '../services/jobContext';
 import { logger } from '../services/logger';
 import { combinedLocator, resolveLocator, type LocatorSpec } from './locators';
 import { bestMatch } from './match';
+import { traceEvent } from './trace';
 
 const OPTION_SELECTOR = '[role=option], [role=menuitem], [role=radio], li, button';
 const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
@@ -13,6 +14,7 @@ const first = (w: string | string[]) => (Array.isArray(w) ? w[0] ?? '' : w);
 export async function click(page: Page, spec: LocatorSpec): Promise<void> {
   const loc = await resolveLocator(page, spec);
   await loc.click();
+  traceEvent(page, 'click', { what: spec.what });
 }
 
 export async function fillText(page: Page, spec: LocatorSpec, value: string): Promise<void> {
@@ -28,7 +30,9 @@ export async function fillText(page: Page, spec: LocatorSpec, value: string): Pr
   } else {
     await loc.fill(value);
   }
-  if ((await read()) === wanted) return;
+  const got1 = await read();
+  traceEvent(page, 'fill', { what: spec.what, method: editable ? 'insertText' : 'fill', valueLength: value.length, readBack: got1.slice(0, 120), ok: got1 === wanted });
+  if (got1 === wanted) return;
   // React-controlled inputs sometimes drop programmatic fills; type the value instead (not to disguise automation).
   if (editable) {
     await page.keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
@@ -37,13 +41,16 @@ export async function fillText(page: Page, spec: LocatorSpec, value: string): Pr
     await loc.fill('');
   }
   await loc.pressSequentially(value, { delay: 15 });
-  if ((await read()) === wanted) return;
+  const got2 = await read();
+  traceEvent(page, 'fill', { what: spec.what, method: 'pressSequentially', valueLength: value.length, readBack: got2.slice(0, 120), ok: got2 === wanted });
+  if (got2 === wanted) return;
   throw adapterError('FILL_FAILED', null, { what: spec.what });
 }
 
 export async function uploadFiles(page: Page, spec: LocatorSpec, files: string[], opts: { previews?: LocatorSpec; timeoutMs?: number } = {}): Promise<void> {
   const input = await resolveLocator(page, spec, { state: 'attached' });
   await input.setInputFiles(files);
+  traceEvent(page, 'upload', { what: spec.what, files: files.length });
   if (!opts.previews) {
     await wait(page, Math.min(20_000, 2000 * files.length));
     return;
@@ -52,7 +59,10 @@ export async function uploadFiles(page: Page, spec: LocatorSpec, files: string[]
   const deadline = Date.now() + (opts.timeoutMs ?? 45_000);
   for (;;) {
     if ((await previews.count()) >= files.length) return;
-    if (Date.now() > deadline) throw adapterError('UPLOAD_FAILED', null, { what: spec.what });
+    if (Date.now() > deadline) {
+      traceEvent(page, 'upload.timeout', { what: spec.what, files: files.length, previews: await previews.count() });
+      throw adapterError('UPLOAD_FAILED', null, { what: spec.what });
+    }
     await wait(page, 300);
   }
 }
@@ -79,6 +89,7 @@ async function collectOptions(page: Page, scope: Locator): Promise<Array<{ text:
 async function pickFromScope(page: Page, scope: Locator, wanted: string | string[], what: string, minScore?: number): Promise<string> {
   const options = await collectOptions(page, scope);
   const match = bestMatch(wanted, options.map((o) => o.text), minScore);
+  traceEvent(page, 'options', { what, wanted: Array.isArray(wanted) ? wanted : [wanted], seen: options.map((o) => o.text).slice(0, 200), match });
   if (!match) throw adapterError('OPTION_NOT_FOUND', null, { value: first(wanted), what });
   const target = options.find((o) => o.text === match.option)!;
   await scope.locator(OPTION_SELECTOR).nth(target.index).click();
@@ -94,6 +105,7 @@ export async function chooseOption(page: Page, trigger: LocatorSpec, wanted: str
   if ((await loc.evaluate((el) => el.tagName)) === 'SELECT') {
     const texts = (await loc.locator('option').allInnerTexts()).map(norm).filter(Boolean);
     const match = bestMatch(wanted, texts);
+    traceEvent(page, 'options', { what: trigger.what, wanted: Array.isArray(wanted) ? wanted : [wanted], seen: texts.slice(0, 200), match });
     if (!match) throw adapterError('OPTION_NOT_FOUND', null, { value: first(wanted), what: trigger.what });
     await loc.selectOption({ label: match.option });
     return match.option;
@@ -136,6 +148,7 @@ export async function chooseRadio(page: Page, group: LocatorSpec, wanted: string
     }));
   const usable = items.filter((i) => !i.skip && i.text);
   const match = bestMatch(wanted, usable.map((i) => i.text));
+  traceEvent(page, 'options', { what: group.what, wanted: Array.isArray(wanted) ? wanted : [wanted], seen: usable.map((i) => i.text).slice(0, 200), match });
   if (!match) throw adapterError('OPTION_NOT_FOUND', null, { value: first(wanted), what: group.what });
   const target = usable.find((i) => i.text === match.option)!;
   const el = scope.locator(selector).nth(target.index);
@@ -171,6 +184,7 @@ export async function typeahead(page: Page, input: LocatorSpec, value: string, o
     return await pickFromScope(page, await defaultOptionScope(page), value, input.what, opts.minScore ?? 0.8);
   } catch (err) {
     if (err instanceof AdapterError && err.code === 'OPTION_NOT_FOUND' && opts.allowCustom) {
+      traceEvent(page, 'typeahead.custom', { what: input.what, value });
       await page.keyboard.press('Enter');
       return value;
     }

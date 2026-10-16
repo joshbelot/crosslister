@@ -9,6 +9,7 @@ export const paths = {
   backupsDir: path.join(config.dataDir, 'backups'),
   screenshotsDir: path.join(config.dataDir, 'screenshots'),
   importsDir: path.join(config.dataDir, 'imports'),
+  tracesDir: path.join(config.dataDir, 'traces'),
   tmpDir: path.join(config.dataDir, 'tmp'),
   secretsDir: path.join(config.dataDir, 'secrets'),
   logsDir: config.logsDir,
@@ -18,6 +19,7 @@ export const listingDir = (id: string) => path.join(paths.listingsDir, id);
 export const originalDir = (id: string) => path.join(listingDir(id), 'original');
 export const derivedDir = (id: string) => path.join(listingDir(id), 'derived');
 export const processedDir = (id: string, mp: MarketplaceId) => path.join(listingDir(id), 'processed', mp);
+export const traceDir = (jobId: string) => path.join(paths.tracesDir, jobId);
 export const profileDir = (mp: MarketplaceId) => path.join(paths.profilesDir, mp);
 
 /** mkdir -p every directory in `paths` (not files). */

@@ -1,3 +1,4 @@
+import { ZipArchive } from 'archiver';
 import { asc } from 'drizzle-orm';
 import { MARKETPLACE_ORDER } from '../../shared/constants';
 import { categoryPathLabel } from '../../shared/taxonomy';
@@ -68,4 +69,12 @@ export function buildCsv(db: Db): string {
     ]));
   }
   return '﻿' + lines.join('\r\n') + '\r\n';
+}
+
+/** A ZIP stream of a whole folder (used for job traces). */
+export function zipDirectory(dir: string): NodeJS.ReadableStream {
+  const archive = new ZipArchive({ zlib: { level: 6 } });
+  archive.directory(dir, false);
+  void archive.finalize();
+  return archive;
 }

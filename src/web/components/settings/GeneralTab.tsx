@@ -63,6 +63,19 @@ export function GeneralTab({ s }: { s: SettingsDraft }) {
             onChange={(e) => s.update((x) => { x.browser.closeIdleMinutes = Math.min(240, Math.max(1, Number(e.target.value) || 1)); return x; })} /> minutes
         </div>
       </section>
+      <section>
+        <h3 className="mb-3 font-semibold">Diagnostics</h3>
+        <label className="flex items-center gap-3 text-sm">
+          <Toggle checked={d.diagnostics.recordTraces} onChange={(v) => s.update((x) => { x.diagnostics.recordTraces = v; return x; })} label="Record a detailed trace of every job" />
+          Record a detailed trace of every job
+        </label>
+        <p className="help">Screenshots, page snapshots and every step the app tried, saved in data/traces/. Use them to find out why a field wasn't filled.</p>
+        <div className="mt-3 flex items-center gap-2 text-sm">
+          Delete traces older than
+          <input className="input h-9 w-20" type="number" min={1} max={365} value={d.diagnostics.keepTraceDays} aria-label="Trace days"
+            onChange={(e) => s.update((x) => { x.diagnostics.keepTraceDays = Math.min(365, Math.max(1, Math.round(Number(e.target.value)) || 1)); return x; })} /> days
+        </div>
+      </section>
     </div>
   );
 }

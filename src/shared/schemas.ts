@@ -117,4 +117,8 @@ export const settingsSchema = z.object({
     ebayPollingEnabled: z.boolean(),
     ebayIntervalMinutes: z.number().int().min(15).max(1440),
   }),
+  diagnostics: z.object({
+    recordTraces: z.boolean(),
+    keepTraceDays: z.number().int().min(1).max(365),
+  }),
 });

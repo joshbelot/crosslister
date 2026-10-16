@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import { traceDir } from '../paths';
 import type { ColorId } from '../../shared/colors';
 import type { Condition, JobState, JobType, ListingStatus, MarketplaceId, MarketplaceListingStatus, StepState } from '../../shared/constants';
 import type {
@@ -66,6 +68,7 @@ export function rowToJob(r: JobRow, steps?: JobStepRow[], listingTitle?: string)
     errorCode: r.errorCode, errorMessage: r.errorMessage, result: r.result ?? null,
     attempt: r.attempt, parentJobId: r.parentJobId, createdAt: r.createdAt, startedAt: r.startedAt, finishedAt: r.finishedAt,
   };
+  job.hasTrace = fs.existsSync(traceDir(r.id));
   if (steps) job.steps = steps.map(rowToStep);
   if (listingTitle !== undefined) job.listingTitle = listingTitle;
   return job;

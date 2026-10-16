@@ -1,5 +1,6 @@
 import type { Locator, Page } from 'playwright';
 import { AdapterError, adapterError } from '../marketplaces/adapterError';
+import { describeCandidate, traceEvent, traceFor } from './trace';
 
 export type LocatorCandidate =
   | { role: Parameters<Page['getByRole']>[0]; name: string | RegExp; exact?: boolean }
@@ -27,18 +28,35 @@ export async function resolveLocator(
   scope: Page | Locator, spec: LocatorSpec, opts: { timeoutMs?: number; state?: 'visible' | 'attached' } = {},
 ): Promise<Locator> {
   const state = opts.state ?? 'visible';
+  const page = 'page' in scope && typeof (scope as Locator).page === 'function' ? (scope as Locator).page() : (scope as Page);
+  const started = Date.now();
   const loc = combinedLocator(scope, spec).first();
+  const report = async (chosen: string | null) => {
+    if (!traceFor(page)) return;
+    const candidates = [];
+    for (const c of spec.candidates) {
+      const base = toLocator(scope, c);
+      candidates.push({
+        desc: describeCandidate(c as Record<string, unknown>),
+        count: await base.count().catch(() => -1),
+        visible: await base.filter({ visible: true }).count().catch(() => -1),
+      });
+    }
+    traceEvent(page, 'locator', { what: spec.what, state, ok: chosen !== null, chosen, waitedMs: Date.now() - started, candidates });
+  };
   try {
     await loc.waitFor({ state, timeout: opts.timeoutMs ?? 6000 });
   } catch {
+    await report(null);
     throw adapterError('ELEMENT_NOT_FOUND', null, { what: spec.what });
   }
   // `.or()` yields DOM order; honor the candidate order (earlier = preferred) among the ones that are present.
   for (const c of spec.candidates) {
     const base = toLocator(scope, c);
     const one = state === 'visible' ? base.filter({ visible: true }).first() : base.first();
-    if ((await one.count().catch(() => 0)) > 0) return one;
+    if ((await one.count().catch(() => 0)) > 0) { await report(describeCandidate(c as Record<string, unknown>)); return one; }
   }
+  await report('combined');
   return loc;
 }
 

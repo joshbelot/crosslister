@@ -1,10 +1,14 @@
+import { execFile } from 'node:child_process';
 import fs from 'node:fs';
+import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { continueJobSchema, crosslistSchema, marketplaceIdSchema } from '../../shared/schemas';
 import { jobSteps, marketplaceListings } from '../db/schema';
 import { AppError, notFound } from '../errors';
+import { traceDir } from '../paths';
+import { zipDirectory } from '../services/exporter';
 import { getAdapter } from '../marketplaces/registry';
 import { crosslist } from '../services/crosslist';
 import { resolveWaiter } from '../services/jobContext';
@@ -25,6 +29,29 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       limit: z.coerce.number().int().min(1).max(500).default(50),
     }).parse(req.query);
     return { items: listJobs(app.db, { listingId: q.listingId, active: q.active === '1', limit: q.limit }) };
+  });
+
+  app.get('/jobs/:id/trace/report', async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const file = path.join(traceDir(id), 'report.md');
+    if (!fs.existsSync(file)) throw notFound('Trace');
+    return reply.type('text/markdown; charset=utf-8').send(fs.readFileSync(file, 'utf8'));
+  });
+
+  app.get('/jobs/:id/trace.zip', async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const dir = traceDir(id);
+    if (!fs.existsSync(dir)) throw notFound('Trace');
+    reply.header('content-disposition', `attachment; filename="crosslister-trace-${id}.zip"`);
+    return reply.type('application/zip').send(zipDirectory(dir));
+  });
+
+  app.post('/jobs/:id/trace/open', async (req) => {
+    const { id } = idParam.parse(req.params);
+    const dir = traceDir(id);
+    if (!fs.existsSync(dir)) throw notFound('Trace');
+    if (process.platform === 'darwin') execFile('open', [dir], () => { /* ignore */ });
+    return { ok: true };
   });
 
   app.get('/jobs/:id', async (req) => getJob(app.db, idParam.parse(req.params).id, { withSteps: true }));

@@ -161,6 +161,7 @@ export interface Job {
   createdAt: string; startedAt: string | null; finishedAt: string | null;
   steps?: JobStep[];
   listingTitle?: string;          // denormalized for Activity drawer
+  hasTrace?: boolean;             // a trace folder exists in data/traces/
 }
 
 export interface LogEntry {
@@ -194,6 +195,7 @@ export interface Settings {
     visionModel: string;          // default 'gemma3:4b'
   };
   statusChecks: { ebayPollingEnabled: boolean; ebayIntervalMinutes: number };
+  diagnostics: { recordTraces: boolean; keepTraceDays: number };
 }
 
 export interface DataFieldDef {

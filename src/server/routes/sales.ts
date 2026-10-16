@@ -4,6 +4,7 @@ import { marketplaceIdSchema, markSoldSchema } from '../../shared/schemas';
 import { dismissSale, deactivateTargets, markSold, unmarkSold } from '../services/sales';
 import { getListing } from '../services/listings';
 import { createStatusChecks } from '../services/statusChecks';
+import '../services/traces';
 
 const idParam = z.object({ id: z.string() });
 

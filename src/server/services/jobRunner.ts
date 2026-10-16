@@ -84,6 +84,11 @@ async function executeJob(db: Db, queued: Job): Promise<void> {
       const eff = buildEffectiveListing(rowToListing(listingRow), photoRows, ml, adapter, settings);
       eff.photoPaths = await ctx.step('photos', 'Preparing photos', () =>
         preparePhotosForMarketplace(job.listingId!, adapter.id, photoRows, adapter.photoSpec));
+      if (ctx.trace) {
+        const { photoPaths, ...rest } = eff;
+        ctx.trace.meta = { ...ctx.trace.meta, listing: { ...rest, photoCount: photoPaths.length, mapping: adapter.describeMapping(eff) } };
+        ctx.trace.writeMeta();
+      }
       if (job.type === 'publish') {
         const res = await adapter.publish(ctx, eff);
         updateTarget(db, job, {
@@ -134,6 +139,8 @@ async function executeJob(db: Db, queued: Job): Promise<void> {
       notifyUser(`${name} failed`, e.userMessage);
     }
   } finally {
+    const final = getJob(db, queued.id);
+    await ctx.finishTrace({ state: final.state, errorCode: final.errorCode ?? null, errorMessage: final.errorMessage ?? null });
     if (job.listingId) recomputeListingStatus(db, job.listingId);
     if (mp) browserManager.markIdle(mp);
   }

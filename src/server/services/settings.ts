@@ -25,6 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   ebay: { fulfillmentPolicyId: null, paymentPolicyId: null, returnPolicyId: null, postalCode: '', dispatchTimeDays: 1 },
   ai: { enabled: false, provider: 'ollama', baseUrl: 'http://127.0.0.1:11434', textModel: 'gemma3:4b', visionModel: 'gemma3:4b' },
   statusChecks: { ebayPollingEnabled: false, ebayIntervalMinutes: 30 },
+  diagnostics: { recordTraces: true, keepTraceDays: 30 },
 };
 
 export function getKv<T>(db: Db, key: string, fallback: T): T {

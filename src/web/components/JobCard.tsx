@@ -3,6 +3,7 @@ import { AlertTriangle, Check, ExternalLink, Loader2, Minus, X } from 'lucide-re
 import clsx from 'clsx';
 import { MARKETPLACE_NAMES, type JobType } from '../../shared/constants';
 import type { Job, JobStep } from '../../shared/types';
+import { api } from '../api/client';
 import { useJobRetry, useMarkListed, useMarketplaces } from '../api/hooks';
 import { NeedsUserCard } from './NeedsUserCard';
 
@@ -93,6 +94,12 @@ export function JobCard({ job }: { job: Job }) {
       {job.state === 'SUCCESS' && job.type === 'update' && <div className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">✓ Updated on {name}</div>}
       {job.state === 'SUCCESS' && job.type === 'connect' && <div className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">✓ Connected to {name}</div>}
       {job.state === 'CANCELLED' && <div className="mt-3 rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-500">Cancelled</div>}
+      {job.hasTrace && ['SUCCESS', 'FAILED', 'CANCELLED'].includes(job.state) && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          <a className="btn btn-secondary btn-sm" href={`/api/jobs/${job.id}/trace.zip`}>Download trace</a>
+          <button className="btn btn-secondary btn-sm" onClick={() => void api.post(`/api/jobs/${job.id}/trace/open`, {})}>Show trace folder</button>
+        </div>
+      )}
     </div>
   );
 }

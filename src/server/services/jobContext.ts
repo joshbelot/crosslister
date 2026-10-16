@@ -2,6 +2,8 @@ import type { Page } from 'playwright';
 import type { MarketplaceId } from '../../shared/constants';
 import type { Job, MarketplacePrefs, NeedsUserRequest, Settings } from '../../shared/types';
 import type { Db } from '../db/client';
+import { JobTrace } from '../browser/trace';
+import type { BrowserAdapter } from '../marketplaces/types';
 
 export interface JobContext {
   db: Db; job: Job; marketplaceId: MarketplaceId; adapterName: string;
@@ -18,6 +20,10 @@ export interface JobContext {
   /** Pause for the user OR resolve automatically when `detect` resolves first (detect gets an AbortSignal that aborts when the user answers). */
   requestUserUntil<T>(req: NeedsUserRequest, detect: (signal: AbortSignal) => Promise<T>): Promise<{ by: 'detected'; value: T } | { by: 'user'; url: string | null }>;
   throwIfCancelled(): void;
+  /** The job's trace, or null when traces are off. */
+  trace: JobTrace | null;
+  /** Called once by the job runner when the job is over. */
+  finishTrace(result: { state: string; errorCode: string | null; errorMessage: string | null }): Promise<void>;
   sleep(ms: number): Promise<void>;           // cancellable
   page(): Promise<Page>;                      // browser adapters: browserManager.getPage(mp)
   screenshot(label: string): Promise<string | null>;
@@ -34,7 +40,7 @@ import { jobSteps } from '../db/schema';
 import { browserManager } from '../browser/browserManager';
 import { adapterError, AdapterError, toAdapterError } from '../marketplaces/common';
 import { paths } from '../paths';
-import { addStep, finishStep, setStepMessage, setStepScreenshot, updateJob } from './jobs';
+import { addStep, finishStep, getJobRow, setStepMessage, setStepScreenshot, updateJob } from './jobs';
 import { logger } from './logger';
 import { notifyUser } from './notify';
 
@@ -78,6 +84,12 @@ export function createJobContext(db: Db, job: Job, signal: AbortSignal, settings
     }
   };
 
+  const adapterForTrace = (() => { try { return getAdapter(mp); } catch { return null; } })();
+  const loginPattern = adapterForTrace && adapterForTrace.kind === 'browser' ? ((adapterForTrace as BrowserAdapter).auth?.loginUrlPattern ?? null) : null;
+  const trace = settings.diagnostics.recordTraces
+    ? new JobTrace({ jobId: job.id, type: job.type, marketplaceId: job.marketplaceId, listingId: job.listingId, input: getJobRow(db, job.id).input }, loginPattern)
+    : null;
+
   const ctx: JobContext = {
     db, job, marketplaceId: mp, adapterName, settings, prefs: settings.marketplaces[mp], signal,
     log: {
@@ -92,12 +104,18 @@ export function createJobContext(db: Db, job: Job, signal: AbortSignal, settings
       throwIfCancelled();
       const step = addStep(db, job.id, key, label);
       currentStepId = step.id;
+      trace?.event('step.start', { seq: step.seq, key, label });
       try {
         const out = await fn();
+        trace?.event('step.end', { seq: step.seq, key, state: 'done' });
+        await trace?.snapshot(`${key}-done`);
         finishStep(db, step.id, 'done');
         return out;
       } catch (err) {
         const e = toAdapterError(err, adapterName);
+        trace?.event('error', { code: e.code, message: e.userMessage, detail: e.detail ?? null, stack: String((err as Error)?.stack ?? '').split('\n').slice(0, 8).join('\n') });
+        trace?.event('step.end', { seq: step.seq, key, state: 'failed', message: e.userMessage, detail: e.detail ?? e.message, code: e.code });
+        if (e.code !== 'CANCELLED') await trace?.snapshot(`${key}-failed`);
         const shot = e.code === 'CANCELLED' ? null : await screenshot(key);
         finishStep(db, step.id, 'failed', e.userMessage, shot ?? undefined);
         throw err;
@@ -108,18 +126,26 @@ export function createJobContext(db: Db, job: Job, signal: AbortSignal, settings
       throwIfCancelled();
       const step = addStep(db, job.id, key, label);
       currentStepId = step.id;
+      trace?.event('step.start', { seq: step.seq, key, label });
       try {
         await fn();
+        trace?.event('step.end', { seq: step.seq, key, state: 'done' });
+        await trace?.snapshot(`${key}-done`);
         finishStep(db, step.id, 'done');
         return true;
       } catch (err) {
         const e = toAdapterError(err, adapterName);
         if (signal.aborted || e.code === 'CANCELLED' || e.code === 'BROWSER_CLOSED') {
+          trace?.event('step.end', { seq: step.seq, key, state: 'failed', message: e.userMessage, detail: e.detail ?? e.message, code: e.code });
+          if (e.code !== 'CANCELLED') await trace?.snapshot(`${key}-failed`);
           finishStep(db, step.id, 'failed', e.userMessage);
           throw err;
         }
+        const message = `Couldn't fill automatically — please fill “${label}” in the browser`;
+        trace?.event('step.end', { seq: step.seq, key, state: 'needs_user', message, detail: e.detail ?? e.message, code: e.code });
+        await trace?.snapshot(`${key}-needs_user`);
         const shot = await screenshot(key);
-        finishStep(db, step.id, 'needs_user', `Couldn't fill automatically — please fill “${label}” in the browser`, shot ?? undefined);
+        finishStep(db, step.id, 'needs_user', message, shot ?? undefined);
         ctx.missingFields.push(label);
         logger.warn(scope, `Step “${label}” needs the user: ${e.detail ?? e.message}`, lc);
         return false;
@@ -145,11 +171,17 @@ export function createJobContext(db: Db, job: Job, signal: AbortSignal, settings
         onAbort = () => reject(cancelledError());
         signal.addEventListener('abort', onAbort, { once: true });
       });
+      // After the waiter is registered: the snapshot takes a moment and POST /continue may arrive meanwhile.
+      trace?.event('needs_user', { reason: req.reason, title: req.title, missingFields: req.missingFields ?? null });
+      await trace?.snapshot('needs-user');
+      trace?.startNeedsUserWatch();
       const detected = detect(child.signal).then((value) => ({ by: 'detected' as const, value }));
       try {
         const result = await Promise.race([userAnswer, detected]);
+        trace?.event('user.answer', { by: result.by, url: result.by === 'user' ? result.url : null });
         return result;
       } finally {
+        trace?.stopNeedsUserWatch();
         child.abort();
         waiters.delete(job.id);
         if (onAbort) signal.removeEventListener('abort', onAbort);
@@ -160,6 +192,11 @@ export function createJobContext(db: Db, job: Job, signal: AbortSignal, settings
     },
 
     throwIfCancelled,
+    trace,
+    async finishTrace(result) {
+      if (!trace) return;
+      try { await trace.finish({ ...result, missingFields: [...ctx.missingFields] }); } catch { /* never break the job */ }
+    },
 
     sleep(ms) {
       return new Promise<void>((resolve, reject) => {
@@ -170,7 +207,11 @@ export function createJobContext(db: Db, job: Job, signal: AbortSignal, settings
       });
     },
 
-    page: () => browserManager.getPage(mp),
+    page: async () => {
+      const p = await browserManager.getPage(mp);
+      trace?.attach(p);
+      return p;
+    },
     screenshot,
     progress(message) { if (currentStepId !== null) setStepMessage(db, currentStepId, message); },
   };
