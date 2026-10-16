@@ -25,11 +25,21 @@
     <button id="next" type="button" data-fixture-id="next">Next</button>
   </div>
   <div id="review" hidden><h2>Review</h2><button id="list" type="button">List this item</button></div>
+  <div id="cover-backdrop" hidden style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50">
+    <div role="dialog" aria-label="Covershot" style="background:#fff;margin:80px auto;padding:16px;width:320px">
+      <p>Select a Covershot.</p>
+      <button type="button" id="cover-cancel">Cancel</button>
+      <button type="button" id="cover-apply">Apply</button>
+    </div>
+  </div>
 <script>
   Fixture.applyMissing();
   const $ = (id) => document.getElementById(id);
   const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
   if ($('photos')) Fixture.uploads($('photos'), $('previews'), 'photos', 'listing-editor__image');
+  if ($('photos')) $('photos').addEventListener('change', () => setTimeout(() => { if (!Fixture.params.get('nocover')) $('cover-backdrop').hidden = false; }, 600));
+  $('cover-apply').addEventListener('click', () => { $('cover-backdrop').hidden = true; Fixture.record('coverShot', 'applied'); });
+  $('cover-cancel').addEventListener('click', () => { $('cover-backdrop').hidden = true; });
   on('title', 'input', (e) => Fixture.record('title', e.target.value));
   on('desc', 'input', (e) => Fixture.record('description', e.target.value));
   if ($('category')) Fixture.menu($('category'), $('category-menu'), {

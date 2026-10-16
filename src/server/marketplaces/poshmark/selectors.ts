@@ -27,11 +27,15 @@ export const sel = {
   },
   loggedIn: { what: 'logged-in indicator', candidates: [{ role: 'link', name: /my closet/i }, { css: '[data-et-name="profile"]' }, { css: 'img.user-image' }] },
   myClosetLink: { what: 'My Closet link', candidates: [{ role: 'link', name: /my closet/i }] },
+  coverShotApply: {
+    what: 'Covershot Apply button',
+    candidates: [{ css: '[role="dialog"] button:text-is("Apply")' }, { role: 'button', name: /^apply$/i }],
+  },
   challenge: { what: 'verification prompt', candidates: [{ text: /verification code|verify (it's|that it's) you|verify your (identity|account|email|phone)|confirm it's you|security check/i }] },
 } satisfies Record<string, LocatorSpec>;
 
 export const selectorGroups: Record<'sell' | 'edit' | 'item' | 'home', LocatorSpec[]> = {
-  sell: [sel.photoInput, sel.title, sel.description, sel.categoryTrigger, sel.sizeTrigger, sel.conditionTrigger, sel.brand, sel.colorTrigger,
+  sell: [sel.photoInput, sel.coverShotApply, sel.title, sel.description, sel.categoryTrigger, sel.sizeTrigger, sel.conditionTrigger, sel.brand, sel.colorTrigger,
     sel.styleTagInput, sel.originalPrice, sel.listingPrice, sel.next],
   edit: [sel.availabilityTrigger, sel.update, sel.deleteListing, sel.title, sel.description, sel.listingPrice],
   item: [],

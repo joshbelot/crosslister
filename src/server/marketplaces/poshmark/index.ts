@@ -113,6 +113,13 @@ export const poshmarkAdapter: BrowserAdapter<PoshmarkData> = {
       fields: [
         { key: 'photos', label: `Uploading ${l.photoPaths.length} photos`, required: true,
           run: (page) => uploadFiles(page, sel.photoInput, l.photoPaths, { previews: sel.photoPreviews }) },
+        { key: 'coverShot', label: 'Confirming the cover photo', run: async (page) => {
+          // Poshmark opens a "Select a Covershot." dialog after the upload; nothing else can be clicked until Apply is pressed.
+          if (await exists(page, sel.coverShotApply, 8000)) {
+            await click(page, sel.coverShotApply);
+            await page.waitForTimeout(800);
+          }
+        } },
         { key: 'title', label: 'Filling title', run: (page) => fillText(page, sel.title, l.title) },
         { key: 'description', label: 'Filling description', run: (page) => fillText(page, sel.description, l.description) },
         { key: 'category', label: 'Selecting category', run: async (page) => {

@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "trace:report": "tsx src/server/scripts/traceReport.ts",
     "test:browser": "RUN_BROWSER_TESTS=1 vitest run tests/browser",
     "db:generate": "drizzle-kit generate",
     "calibrate": "tsx src/server/scripts/calibrate.ts",

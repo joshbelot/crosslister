@@ -40,10 +40,10 @@ describe.skipIf(!process.env.RUN_BROWSER_TESTS)('poshmark adapter (fixtures — 
     expect(j.result).toMatchObject({ remoteId: ID, verified: true });
     expect(await readFilled('poshmark')).toMatchObject({
       title: 'Vintage Levi 501 Jeans', description: 'Great jeans.', category: 'Men > Jeans', size: '32', condition: 'Good', brand: "Levi's",
-      colors: ['Blue'], styleTags: [], originalPrice: '120', listingPrice: '65', photos: ['01.jpg'],
+      colors: ['Blue'], styleTags: [], originalPrice: '120', listingPrice: '65', photos: ['01.jpg'], coverShot: 'applied',
     });
     expect(j.steps.map((s: { key: string }) => s.key)).toEqual([
-      'photos', 'open', 'login', 'photos', 'title', 'description', 'category', 'size', 'condition', 'brand', 'colors', 'styleTags',
+      'photos', 'open', 'login', 'photos', 'coverShot', 'title', 'description', 'category', 'size', 'condition', 'brand', 'colors', 'styleTags',
       'originalPrice', 'listingPrice', 'next', 'submit', 'confirm',
     ]);
     expect((await listing(l.id)).marketplaces[0]).toMatchObject({ status: 'active', remoteId: ID });
