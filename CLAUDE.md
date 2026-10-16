@@ -2,10 +2,10 @@
 
 Personal, single-user, local-only crosslisting app (Vendoo alternative) for a Mac.
 
-**Current milestone:** M1–M43 done — see `IMPLEMENTATION_SUMMARY.md` (browser adapters are assisted, uncalibrated).
+**Current milestone:** Round 3 — M44 (job traces) is next; M1–M43 done. Plan: `docs/spec/14-round-3-traces-price-sales.md`. See `IMPLEMENTATION_SUMMARY.md` (browser adapters are assisted, uncalibrated).
 
 ## Read first
-1. `docs/spec/README.md` — rules + milestone list (M1…M43). Work strictly in order.
+1. `docs/spec/README.md` — rules + milestone list (M1…M49). Work strictly in order.
 2. The spec file(s) named by the current milestone.
 3. `docs/MARKETPLACE_RESEARCH.md` and `docs/ARCHITECTURE.md` for the reasons behind decisions.
 

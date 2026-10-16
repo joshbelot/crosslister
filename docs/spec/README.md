@@ -19,6 +19,7 @@ This folder is a complete, step-by-step build plan. An implementing agent should
 | [11-testing.md](11-testing.md) | Test setup and the exact test cases required |
 | [12-docs-and-delivery.md](12-docs-and-delivery.md) | Documentation to write, `IMPLEMENTATION_SUMMARY.md` template, definition of done |
 | [13-round-2-fixes.md](13-round-2-fixes.md) | Round 2 (after first real use): one shared Chrome window, login detection, small fixes |
+| [14-round-3-traces-price-sales.md](14-round-3-traces-price-sales.md) | Round 3: job traces, Poshmark covershot fix, change price everywhere, Sold page, sale listener |
 
 Background: [`../MARKETPLACE_RESEARCH.md`](../MARKETPLACE_RESEARCH.md) (why each marketplace is built the way it is) and [`../ARCHITECTURE.md`](../ARCHITECTURE.md) (decision table).
 
@@ -123,5 +124,18 @@ All four are specified in [13-round-2-fixes.md](13-round-2-fixes.md). Where it d
 | M41 | Login detection that survives wrong selectors | 13 §2 | New Depop fixture test passes; all browser tests pass. |
 | M42 | Small fixes (route, validation text, Depop weight warning) | 13 §3 | `/listings/new` opens the editor; tests pass. |
 | M43 | Round 2 docs | 13 §4 | Docs updated; summary updated. |
+
+### Round 3 — Traces, price changes, sales
+
+Specified in [14-round-3-traces-price-sales.md](14-round-3-traces-price-sales.md). Where it disagrees with files 01–13, file 14 wins.
+
+| # | Milestone | Spec |
+|---|---|---|
+| M44 | Job traces | 14 §1 |
+| M45 | Trace report command + Poshmark covershot fix | 14 §2 |
+| M46 | Change price everywhere | 14 §3 |
+| M47 | Sales table and Sold page | 14 §4 |
+| M48 | Sale listener and automatic delisting | 14 §5 |
+| M49 | Round 3 docs | 14 §6 |
 
 Stopping point: if time is limited, finish whole milestones in order. Phase 1 + Phase 2 is the minimum useful product; Phase 3 delivers the success criteria.
