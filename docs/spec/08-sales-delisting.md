@@ -1,5 +1,7 @@
 # 08 — Sales and Delisting (M14, M33, M34)
 
+> Round 3 (`14-round-3-traces-price-sales.md` §4–§5) adds the `sales` table, timed browser checks and automatic delisting. Where they disagree, file 14 wins.
+
 V1 (Phase 1–3): the user marks an item sold manually and the app removes it from the other marketplaces. Phase 5 adds status checks and sale detection.
 
 ## 1. Mark sold — `POST /api/listings/:id/mark-sold` (M14)

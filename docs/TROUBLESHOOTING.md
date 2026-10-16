@@ -40,4 +40,6 @@ Each entry is *symptom → cause → fix*.
 
 **"AI is turned off in Settings." / "The AI model didn't respond".** → AI is disabled, or the model server isn't running. → Settings → AI → **Test connection**. For Ollama, run `ollama serve` and `ollama pull gemma3:4b`.
 
-**A sale was detected but nothing else changed.** → By design: the banner only offers to mark the item sold. Click **Review** to mark it sold and choose where to remove it.
+**A field wasn't filled.** → Open Activity → the job → **Download trace**, or run `npm run trace:report -- latest <marketplace>`, and follow `docs/TRACES.md`.
+
+**A sale was detected but nothing else changed.** → "When an item sells, remove it from the other marketplaces automatically" is off (Settings → Sales), so the banner only offers to mark the item sold. Click **Review** to mark it sold and choose where to remove it.

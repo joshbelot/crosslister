@@ -60,9 +60,17 @@ Nothing is added until you review it. Each item shows the photos and the fields 
 
 On an item's page, **Mark Sold** records the sale and offers to remove the item from the other marketplaces; each removal shows up in Activity. **Deactivate Everywhere** removes it without marking it sold.
 
-## Sales detection
+## Change a price
 
-**Inventory → ⋯ → Check listing statuses** looks at your live listings (browser marketplaces are only checked when you ask). If an item sold somewhere, a banner offers to mark it sold and remove it elsewhere — nothing happens automatically. For eBay you can also turn on automatic checks in **Settings → eBay**.
+On an item's page, **Change price** lets you type a new price or take 5–20% off. A table shows every marketplace where it is live, what it has now and what it will have; tick the ones to update. Crosslister changes only the price there (as an update job in Activity). Marketplaces where the app can't change it (the manual ones) show an **Open** link instead.
+
+## Sold page
+
+**Sold** in the top bar lists every sale: date, item, platform, sale price, shipping the buyer paid, fees, your label cost, item cost and net, plus buyer and where the sale came from. Filter by period, platform or text, edit any sale, or **Export CSV**. **Mark Sold** has a "More sale details" section for fees, shipping and buyer.
+
+## Automatic sale detection
+
+While Crosslister is running it looks at your live Mercari, Poshmark, Depop and Grailed listings in a background tab (every 60 minutes by default, at most 20 listings per marketplace per round, a few seconds apart), and eBay through its API. A browser page that looks sold is checked a second time a minute later before anything happens. When an item has sold, the sale is recorded on the Sold page and the item is removed from your other marketplaces; where you click the final button yourself you get a card in Activity to confirm. Change this in **Settings → Sales**, or turn it off and use **Inventory → ⋯ → Check listing statuses** and the banner instead.
 
 ## Optional: AI suggestions
 
@@ -80,5 +88,6 @@ Turn on AI in **Settings → AI** (a local model through Ollama is free; see [do
 
 - [docs/SETUP.md](docs/SETUP.md) — setup, eBay connection, AI, calibration
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — when something goes wrong
+- [docs/TRACES.md](docs/TRACES.md) — job traces: find out why a field wasn't filled
 - [docs/MARKETPLACE_ADAPTERS.md](docs/MARKETPLACE_ADAPTERS.md) — how each marketplace is handled and how to fix selectors
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/MARKETPLACE_RESEARCH.md](docs/MARKETPLACE_RESEARCH.md), [docs/spec/README.md](docs/spec/README.md) — design and the build spec
