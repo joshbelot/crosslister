@@ -19,7 +19,7 @@ function eff(over: Record<string, unknown> = {}, mlData: Record<string, unknown>
   };
   const ml = rowToMarketplaceListing({
     id: 'm', listingId: 'l1', marketplaceId: 'poshmark', status: 'not_listed', remoteId: null, url: null, titleOverride: null, descriptionOverride: null,
-    priceOverrideCents: null, data: mlData, verified: true, lastError: null, lastErrorCode: null, listedAt: null, endedAt: null, lastSyncedAt: null,
+    priceOverrideCents: null, listedPriceCents: null, data: mlData, verified: true, lastError: null, lastErrorCode: null, listedAt: null, endedAt: null, lastSyncedAt: null,
     createdAt: now, updatedAt: now,
   });
   return buildEffectiveListing(rowToListing(row as never), [], ml, poshmarkAdapter, DEFAULT_SETTINGS) as unknown as Parameters<typeof poshmarkAdapter.validate>[0];

@@ -4,7 +4,7 @@ import type { Job } from '../../shared/types';
 import { browserManager, onContextClosed } from '../browser/browserManager';
 import type { Db } from '../db/client';
 import { listings, marketplaceListings, jobs } from '../db/schema';
-import { adapterError, AdapterError, toAdapterError } from '../marketplaces/common';
+import { adapterError, AdapterError, toAdapterError, updateFields } from '../marketplaces/common';
 import { getAdapter } from '../marketplaces/registry';
 import type { MarketplaceAdapter } from '../marketplaces/types';
 import { buildEffectiveListing } from './effectiveListing';
@@ -93,14 +93,18 @@ async function executeJob(db: Db, queued: Job): Promise<void> {
         const res = await adapter.publish(ctx, eff);
         updateTarget(db, job, {
           status: 'active', remoteId: res.remoteId, url: res.url, verified: res.verified, listedAt: nowIso(),
-          endedAt: null, lastError: null, lastErrorCode: null, lastSyncedAt: nowIso(),
+          endedAt: null, lastError: null, lastErrorCode: null, lastSyncedAt: nowIso(), listedPriceCents: eff.priceCents,
         });
         result = { remoteId: res.remoteId, url: res.url, verified: res.verified };
         logger.info(scope, `Listing published ID: ${res.remoteId ?? '(none)'}`, lc);
       } else {
         if (!adapter.update) throw new Error('adapter has no update()');
         await adapter.update(ctx, eff, ml);
-        updateTarget(db, job, { lastSyncedAt: nowIso(), lastError: null, lastErrorCode: null });
+        const pushed = updateFields(ctx);
+        updateTarget(db, job, {
+          lastSyncedAt: nowIso(), lastError: null, lastErrorCode: null,
+          ...(pushed.includes('price') ? { listedPriceCents: eff.priceCents } : {}),
+        });
       }
     } else if (job.type === 'deactivate') {
       const ml = targetFor(db, job);

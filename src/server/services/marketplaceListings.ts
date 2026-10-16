@@ -107,8 +107,9 @@ export function markListed(db: Db, listingId: string, mp: MarketplaceId, input: 
     if (parsed) { url = parsed.url; remoteId = remoteId ?? parsed.remoteId; }
   }
   if (!url && remoteId) url = adapter.listingUrl(remoteId);
+  const listedPriceCents = buildEffectiveListing(rowToListing(requireListing(db, listingId)), listPhotoRows(db, listingId), target, adapter, getSettings(db)).priceCents;
   updateTarget(db, target.id, {
-    status: 'active', url, remoteId, verified: Boolean(url || remoteId), listedAt: nowIso(), endedAt: null,
+    status: 'active', url, remoteId, listedPriceCents, verified: Boolean(url || remoteId), listedAt: nowIso(), endedAt: null,
     lastError: null, lastErrorCode: null,
   });
   logger.info(mp.toUpperCase(), 'Marked as listed', { listingId, marketplaceId: mp });
@@ -128,7 +129,7 @@ export function previewTarget(db: Db, listingId: string, mp: MarketplaceId) {
   const adapter = getAdapter(mp);
   const ml = getTarget(db, listingId, mp) ?? {
     ...({} as MarketplaceListing), id: '', listingId, marketplaceId: mp, status: 'not_listed' as const, remoteId: null, url: null,
-    titleOverride: null, descriptionOverride: null, priceOverrideCents: null, data: {}, verified: true, lastError: null,
+    titleOverride: null, descriptionOverride: null, priceOverrideCents: null, listedPriceCents: null, data: {}, verified: true, lastError: null,
     lastErrorCode: null, listedAt: null, endedAt: null, lastSyncedAt: null, createdAt: nowIso(), updatedAt: nowIso(),
   };
   const eff = buildEffectiveListing(rowToListing(row), listPhotoRows(db, listingId), ml, adapter, getSettings(db));

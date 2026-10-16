@@ -47,6 +47,7 @@ export interface MarketplaceListing {
   titleOverride: string | null;
   descriptionOverride: string | null;
   priceOverrideCents: number | null;
+  listedPriceCents: number | null;  // the price this marketplace actually has (set when published / updated / marked listed)
   data: Record<string, unknown>;   // marketplace-specific fields, validated by adapter.dataSchema
   verified: boolean;               // false when user marked listed without a URL
   lastError: string | null;

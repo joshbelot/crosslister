@@ -45,7 +45,7 @@ export function rowToMarketplaceListing(r: MarketplaceListingRow): MarketplaceLi
     id: r.id, listingId: r.listingId, marketplaceId: r.marketplaceId as MarketplaceId,
     status: r.status as MarketplaceListingStatus, remoteId: r.remoteId, url: r.url,
     titleOverride: r.titleOverride, descriptionOverride: r.descriptionOverride,
-    priceOverrideCents: r.priceOverrideCents, data: r.data ?? {}, verified: r.verified,
+    priceOverrideCents: r.priceOverrideCents, listedPriceCents: r.listedPriceCents, data: r.data ?? {}, verified: r.verified,
     lastError: r.lastError, lastErrorCode: r.lastErrorCode, listedAt: r.listedAt, endedAt: r.endedAt,
     lastSyncedAt: r.lastSyncedAt, createdAt: r.createdAt, updatedAt: r.updatedAt,
   };

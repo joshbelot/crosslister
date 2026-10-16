@@ -22,6 +22,7 @@ import { listingsRoutes } from './routes/listings';
 import { logsRoutes } from './routes/logs';
 import { marketplacesRoutes } from './routes/marketplaces';
 import { photosRoutes } from './routes/photos';
+import { priceChangeRoutes } from './routes/priceChange';
 import { salesRoutes } from './routes/sales';
 import { settingsRoutes } from './routes/settings';
 
@@ -85,6 +86,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     await api.register(marketplacesRoutes);
     await api.register(jobsRoutes);
     await api.register(salesRoutes);
+    await api.register(priceChangeRoutes);
     await api.register(exportRoutes);
     await api.register(importRoutes);
     await api.register(aiRoutes);

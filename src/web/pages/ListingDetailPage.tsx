@@ -14,6 +14,7 @@ import {
 } from '../api/hooks';
 import { DeactivateAllModal } from '../components/DeactivateAllModal';
 import { MarkSoldModal } from '../components/MarkSoldModal';
+import { PriceChangeModal } from '../components/PriceChangeModal';
 import { MarketplaceBadge } from '../components/MarketplaceBadge';
 import { Modal } from '../components/Modal';
 import { StatusPill } from '../components/StatusPill';
@@ -97,6 +98,7 @@ export function ListingDetailPage() {
   const [photoIdx, setPhotoIdx] = useState(0);
   const [menu, setMenu] = useState(false);
   const [soldOpen, setSoldOpen] = useState(false);
+  const [priceOpen, setPriceOpen] = useState(false);
   const [deactOpen, setDeactOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [lightbox, setLightbox] = useState(false);
@@ -162,6 +164,7 @@ export function ListingDetailPage() {
           <Link className="btn btn-secondary" to={`/listings/${l.id}/edit`}><Pencil size={15} /> Edit</Link>
           <Link className="btn btn-secondary" to={`/listings/${l.id}/edit?crosslist=1`}><Send size={15} /> Cross-list</Link>
           <button className="btn btn-secondary" disabled={duplicate.isPending} onClick={() => duplicate.mutate(l.id, { onSuccess: (d) => navigate(`/listings/${d.id}/edit`) })}><CopyIcon size={15} /> Duplicate</button>
+          {!l.soldAt && <button className="btn btn-secondary" onClick={() => setPriceOpen(true)}>Change price</button>}
           {l.soldAt
             ? <button className="btn btn-secondary" disabled={unmark.isPending} onClick={() => unmark.mutate(l.id)}><Undo2 size={15} /> Undo sold</button>
             : <button className="btn btn-secondary" onClick={() => setSoldOpen(true)}><Tag size={15} /> Mark Sold</button>}
@@ -276,6 +279,7 @@ export function ListingDetailPage() {
         )}
       </section>
 
+      {priceOpen && <PriceChangeModal listing={l} onClose={() => setPriceOpen(false)} />}
       {soldOpen && <MarkSoldModal listing={l} onClose={() => setSoldOpen(false)} />}
       {deactOpen && <DeactivateAllModal listing={l} onClose={() => setDeactOpen(false)} />}
       {lightbox && photo && (

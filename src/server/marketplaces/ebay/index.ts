@@ -18,7 +18,7 @@ import { getConnection } from '../../services/connectionStore';
 import { logger } from '../../services/logger';
 import { getSettings, setKv } from '../../services/settings';
 import { adapterError } from '../adapterError';
-import { getAdapterDb, hostOk } from '../common';
+import { getAdapterDb, hostOk, updateFields } from '../common';
 import type { MarketplaceAdapter } from '../types';
 import { disconnect, ebayHosts, EBAY_SCOPES, buildAuthorizeUrl, exchangeCode, getUserAccessToken, hasUserToken, isConfigured, missingConfig } from './auth';
 import {
@@ -224,8 +224,12 @@ export const ebayAdapter: MarketplaceAdapter<EbayData> = {
   async update(ctx, l, ml) {
     const id = requireItemId(ml);
     await ctx.step('revise', 'Updating eBay listing', async () => {
-      const inner = `<Item><ItemID>${escapeXml(id)}</ItemID><Title>${escapeXml(l.title)}</Title><Description>${cdata(descriptionToHtml(l.description))}</Description>`
-        + `<StartPrice currencyID="USD">${((l.priceCents ?? 0) / 100).toFixed(2)}</StartPrice></Item>`;
+      const wanted = updateFields(ctx);
+      const inner = `<Item><ItemID>${escapeXml(id)}</ItemID>`
+        + (wanted.includes('title') ? `<Title>${escapeXml(l.title)}</Title>` : '')
+        + (wanted.includes('description') ? `<Description>${cdata(descriptionToHtml(l.description))}</Description>` : '')
+        + (wanted.includes('price') ? `<StartPrice currencyID="USD">${((l.priceCents ?? 0) / 100).toFixed(2)}</StartPrice>` : '')
+        + '</Item>';
       await tradingCall('ReviseFixedPriceItem', inner);
     });
   },

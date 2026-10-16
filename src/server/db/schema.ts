@@ -67,6 +67,7 @@ export const marketplaceListings = sqliteTable('marketplace_listings', {
   titleOverride: text('title_override'),
   descriptionOverride: text('description_override'),
   priceOverrideCents: integer('price_override_cents'),
+  listedPriceCents: integer('listed_price_cents'),
   data: text('data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default(sql`'{}'`),
   verified: integer('verified', { mode: 'boolean' }).notNull().default(true),
   lastError: text('last_error'),

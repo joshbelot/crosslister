@@ -122,3 +122,9 @@ export const settingsSchema = z.object({
     keepTraceDays: z.number().int().min(1).max(365),
   }),
 });
+
+export const priceChangeSchema = z.object({
+  priceCents: z.number().int().min(1),
+  marketplaceIds: z.array(marketplaceIdSchema).default([]),
+  clearOverrides: z.boolean().default(false),
+});

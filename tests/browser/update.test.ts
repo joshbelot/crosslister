@@ -57,6 +57,34 @@ describe.skipIf(!process.env.RUN_BROWSER_TESTS)('update live listings (fixtures)
         expect(d.marketplaces[0].status).toBe('active');
         expect(d.marketplaces[0].lastSyncedAt).toBeTruthy();
       }, 120_000);
+
+      it('a price change fills only the price', async () => {
+        await setAutoSubmit(t.app, c.mp, c.auto);
+        await fakeLogin(c.mp, env.fixtureUrl);
+        const l = await seedListing(t.app, { brand: "Levi's", tags: ['vintage'] });
+        await req(t.app, 'POST', `/api/listings/${l.id}/marketplaces/${c.mp}/mark-listed`, { url: c.url });
+        const res = (await req(t.app, 'POST', `/api/listings/${l.id}/price-change`, { priceCents: 7000, marketplaceIds: [c.mp], clearOverrides: false })).json();
+        expect(res.jobs).toHaveLength(1);
+        const jobId = res.jobs[0].id as string;
+        const run = runner.runOnce(t.db);
+        if (!c.auto) {
+          let waiting;
+          for (let i = 0; i < 600 && !waiting; i++) { const j = await job(jobId); if (j.state === 'NEEDS_USER') waiting = j; else if (['FAILED', 'SUCCESS'].includes(j.state)) throw new Error(`ended early ${j.state} ${j.errorMessage}`); else await new Promise((r) => setTimeout(r, 100)); }
+          const { browserManager } = await import('../../src/server/browser/browserManager');
+          await (await browserManager.getPage(c.mp)).getByRole('button', { name: c.button, exact: true }).click();
+        }
+        await run;
+        const j = await job(jobId);
+        expect(j.state, j.errorMessage).toBe('SUCCESS');
+        const { browserManager } = await import('../../src/server/browser/browserManager');
+        const edit = JSON.parse((await (await browserManager.getPage(c.mp)).evaluate(() => localStorage.getItem('cl-edit'))) ?? '{}');
+        expect(edit).toMatchObject({ price: c.expected.price });
+        // The fixture edit pages come pre-filled ("Old title"), so untouched means the listing's own title/description were never typed.
+        expect(edit.title ?? 'Old title').not.toBe(l.title);
+        expect(String(edit.description ?? '')).not.toContain('Great jeans');
+        expect(j.steps.map((s: { key: string }) => s.key)).toEqual(expect.arrayContaining(['price']));
+        expect(j.steps.map((s: { key: string }) => s.key)).not.toContain('title');
+      }, 120_000);
     });
   }
 });

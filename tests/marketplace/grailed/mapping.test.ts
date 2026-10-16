@@ -17,7 +17,7 @@ function eff(categoryId: string) {
   };
   const ml = rowToMarketplaceListing({
     id: 'm', listingId: 'l1', marketplaceId: 'grailed', status: 'not_listed', remoteId: null, url: null, titleOverride: null, descriptionOverride: null,
-    priceOverrideCents: null, data: {}, verified: true, lastError: null, lastErrorCode: null, listedAt: null, endedAt: null, lastSyncedAt: null, createdAt: now, updatedAt: now,
+    priceOverrideCents: null, listedPriceCents: null, data: {}, verified: true, lastError: null, lastErrorCode: null, listedAt: null, endedAt: null, lastSyncedAt: null, createdAt: now, updatedAt: now,
   });
   return buildEffectiveListing(rowToListing(row as never), [], ml, grailedAdapter, DEFAULT_SETTINGS);
 }

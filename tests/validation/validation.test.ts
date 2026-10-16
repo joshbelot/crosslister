@@ -73,7 +73,7 @@ describe('marketplace rules', () => {
     };
     const ml = rowToMarketplaceListing({
       id: 'm', listingId: 'l1', marketplaceId: 'other', status: 'not_listed', remoteId: null, url: null, titleOverride: null,
-      descriptionOverride: null, priceOverrideCents: null, data: {}, verified: true, lastError: null, lastErrorCode: null,
+      descriptionOverride: null, priceOverrideCents: null, listedPriceCents: null, data: {}, verified: true, lastError: null, lastErrorCode: null,
       listedAt: null, endedAt: null, lastSyncedAt: null, createdAt: now, updatedAt: now,
     });
     const eff = buildEffectiveListing(rowToListing(row), [], ml, adapter, DEFAULT_SETTINGS);

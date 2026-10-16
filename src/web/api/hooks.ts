@@ -200,3 +200,23 @@ export const useSaveCategoryMap = () =>
 
 export const useRunStatusChecks = () =>
   useApiMutation(() => api.post<{ jobs: Job[]; count: number }>('/api/status-checks/run'), (qc) => { void qc.invalidateQueries({ queryKey: ['jobs'] }); });
+
+export interface PriceChangeRow {
+  marketplaceId: MarketplaceId; name: string; kind: 'api' | 'browser' | 'manual';
+  currentPriceCents: number | null; newPriceCents: number | null; hasOverride: boolean; canPush: boolean; note: string | null; url: string | null;
+}
+
+export const usePriceChangePreview = (id: string, priceCents: number | null, clearOverrides: boolean) =>
+  useQuery({
+    queryKey: ['price-change-preview', id, priceCents, clearOverrides],
+    queryFn: () => api.get<{ items: PriceChangeRow[] }>(`/api/listings/${id}/price-change/preview?priceCents=${priceCents}&clearOverrides=${clearOverrides ? 1 : 0}`),
+    enabled: priceCents !== null && priceCents >= 1,
+    placeholderData: (prev) => prev,
+  });
+
+export const usePriceChange = () =>
+  useApiMutation(
+    ({ id, body }: { id: string; body: { priceCents: number; marketplaceIds: MarketplaceId[]; clearOverrides: boolean } }) =>
+      api.post<{ listing: ListingDetail; jobs: Job[]; skipped: Array<{ marketplaceId: MarketplaceId; reason: string }> }>(`/api/listings/${id}/price-change`, body),
+    (qc, a) => refreshListing(qc, a.id),
+  );
