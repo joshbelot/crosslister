@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { MarketplaceId } from '../../shared/constants';
 import type { markSoldSchema } from '../../shared/schemas';
-import type { Job, ListingDetail } from '../../shared/types';
+import type { Job, ListingDetail, Sale } from '../../shared/types';
 import type { z } from 'zod';
 import type { Db } from '../db/client';
 import { jobs, listings, marketplaceListings } from '../db/schema';
@@ -14,6 +14,7 @@ import { getListing } from './listings';
 import { logger } from './logger';
 import { rowToListing } from './mappers';
 import { getTarget, updateTarget } from './marketplaceListings';
+import { createSale, deleteSalesForListing } from './salesLedger';
 import { listPhotoRows } from './photos';
 import { getSettings } from './settings';
 
@@ -44,7 +45,7 @@ export function deactivateTargets(db: Db, listingId: string, ids?: MarketplaceId
   return created;
 }
 
-export function markSold(db: Db, id: string, body: MarkSoldInput): { listing: ListingDetail; jobs: Job[] } {
+export function markSold(db: Db, id: string, body: MarkSoldInput, source: Sale['source'] = 'manual'): { listing: ListingDetail; jobs: Job[] } {
   const row = requireListingRow(db, id);
   const soldAt = body.soldAt ?? nowIso();
   const mp = body.marketplaceId === 'elsewhere' ? null : body.marketplaceId;
@@ -53,7 +54,7 @@ export function markSold(db: Db, id: string, body: MarkSoldInput): { listing: Li
   if (soldPrice === null && mp) {
     const ml = getTarget(db, id, mp);
     if (ml) {
-      soldPrice = buildEffectiveListing(rowToListing(row), listPhotoRows(db, id), ml, getAdapter(mp), getSettings(db)).priceCents;
+      soldPrice = ml.listedPriceCents ?? buildEffectiveListing(rowToListing(row), listPhotoRows(db, id), ml, getAdapter(mp), getSettings(db)).priceCents;
     }
   }
   soldPrice ??= row.priceCents;
@@ -62,6 +63,14 @@ export function markSold(db: Db, id: string, body: MarkSoldInput): { listing: Li
     soldAt, soldPriceCents: soldPrice, soldMarketplaceId: body.marketplaceId,
     saleDetectedMarketplaceId: null, saleDetectedAt: null, updatedAt: nowIso(),
   }).where(eq(listings.id, id)).run();
+
+  deleteSalesForListing(db, id);   // marking an already-sold item again replaces its sale row
+  createSale(db, {
+    listingId: id, marketplaceId: body.marketplaceId, soldAt, salePriceCents: soldPrice, source,
+    shippingChargedCents: body.shippingChargedCents, marketplaceFeesCents: body.marketplaceFeesCents,
+    shippingCostCents: body.shippingCostCents, otherCostsCents: body.otherCostsCents,
+    buyer: body.buyer, orderUrl: body.orderUrl, notes: body.notes,
+  });
 
   if (mp) {
     const ml = getTarget(db, id, mp);
@@ -84,6 +93,7 @@ export function unmarkSold(db: Db, id: string): ListingDetail {
     }
   }
   db.update(listings).set({ soldAt: null, soldPriceCents: null, soldMarketplaceId: null, updatedAt: nowIso() }).where(eq(listings.id, id)).run();
+  deleteSalesForListing(db, id);
   recomputeListingStatus(db, id);
   return getListing(db, id);
 }

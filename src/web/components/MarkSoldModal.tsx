@@ -17,6 +17,13 @@ export function MarkSoldModal({ listing, onClose }: { listing: ListingDetail; on
   const [date, setDate] = useState(today());
   const [priceTouched, setPriceTouched] = useState(false);
   const [checked, setChecked] = useState<Set<MarketplaceId>>(new Set(active.map((m) => m.marketplaceId)));
+  const [shipCharged, setShipCharged] = useState<number | null>(null);
+  const [fees, setFees] = useState<number | null>(null);
+  const [labelCost, setLabelCost] = useState<number | null>(null);
+  const [otherCosts, setOtherCosts] = useState<number | null>(null);
+  const [buyer, setBuyer] = useState('');
+  const [orderUrl, setOrderUrl] = useState('');
+  const [notes, setNotes] = useState('');
   const markSold = useMarkSold();
   const unmark = useUnmarkSold();
 
@@ -30,6 +37,13 @@ export function MarkSoldModal({ listing, onClose }: { listing: ListingDetail; on
         marketplaceId: soldOn, soldPriceCents: price,
         soldAt: new Date(`${date}T12:00:00`).toISOString(),
         deactivateMarketplaceIds: selectedOthers.map((m) => m.marketplaceId),
+        ...(shipCharged !== null ? { shippingChargedCents: shipCharged } : {}),
+        ...(fees !== null ? { marketplaceFeesCents: fees } : {}),
+        ...(labelCost !== null ? { shippingCostCents: labelCost } : {}),
+        ...(otherCosts !== null ? { otherCostsCents: otherCosts } : {}),
+        ...(buyer.trim() ? { buyer: buyer.trim() } : {}),
+        ...(orderUrl.trim() ? { orderUrl: orderUrl.trim() } : {}),
+        ...(notes.trim() ? { notes: notes.trim() } : {}),
       },
     }, {
       onSuccess: (res) => {
@@ -70,6 +84,18 @@ export function MarkSoldModal({ listing, onClose }: { listing: ListingDetail; on
             <input id="sold-date" type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
         </div>
+        <details>
+          <summary className="cursor-pointer text-sm font-medium text-zinc-700">More sale details</summary>
+          <div className="mt-3 grid grid-cols-2 gap-4">
+            <div><label className="label" htmlFor="sold-ship-charged">Shipping paid by buyer</label><PriceInput id="sold-ship-charged" value={shipCharged} onChange={setShipCharged} /></div>
+            <div><label className="label" htmlFor="sold-fees">Fees</label><PriceInput id="sold-fees" value={fees} onChange={setFees} /></div>
+            <div><label className="label" htmlFor="sold-label">Shipping label cost</label><PriceInput id="sold-label" value={labelCost} onChange={setLabelCost} /></div>
+            <div><label className="label" htmlFor="sold-other">Other costs</label><PriceInput id="sold-other" value={otherCosts} onChange={setOtherCosts} /></div>
+            <div><label className="label" htmlFor="sold-buyer">Buyer</label><input id="sold-buyer" className="input" value={buyer} onChange={(e) => setBuyer(e.target.value)} /></div>
+            <div><label className="label" htmlFor="sold-order">Order link</label><input id="sold-order" className="input" value={orderUrl} onChange={(e) => setOrderUrl(e.target.value)} /></div>
+            <div className="col-span-2"><label className="label" htmlFor="sold-notes">Notes</label><textarea id="sold-notes" className="input" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          </div>
+        </details>
         {others.length > 0 && (
           <fieldset>
             <legend className="label">Remove from other marketplaces</legend>

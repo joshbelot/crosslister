@@ -66,6 +66,13 @@ export const markSoldSchema = z.object({
   soldPriceCents: z.number().int().min(0).nullable().optional(),
   soldAt: z.string().datetime().optional(),
   deactivateMarketplaceIds: z.array(marketplaceIdSchema).default([]),
+  shippingChargedCents: z.number().int().min(0).nullable().optional(),
+  marketplaceFeesCents: z.number().int().min(0).nullable().optional(),
+  shippingCostCents: z.number().int().min(0).nullable().optional(),
+  otherCostsCents: z.number().int().min(0).nullable().optional(),
+  buyer: z.string().max(200).optional(),
+  orderUrl: z.string().url().nullable().optional(),
+  notes: z.string().max(2000).optional(),
 });
 export const continueJobSchema = z.object({ url: z.string().url().nullable().optional() });
 export const photoOrderSchema = z.object({ photoIds: z.array(z.string()).min(1) });
@@ -127,4 +134,19 @@ export const priceChangeSchema = z.object({
   priceCents: z.number().int().min(1),
   marketplaceIds: z.array(marketplaceIdSchema).default([]),
   clearOverrides: z.boolean().default(false),
+});
+
+const optionalMoney = z.number().int().min(0).nullable().optional();
+export const saleUpdateSchema = z.object({
+  soldAt: z.string().datetime().optional(),
+  marketplaceId: z.union([marketplaceIdSchema, z.literal('elsewhere')]).optional(),
+  salePriceCents: optionalMoney,
+  shippingChargedCents: optionalMoney,
+  marketplaceFeesCents: optionalMoney,
+  shippingCostCents: optionalMoney,
+  otherCostsCents: optionalMoney,
+  itemCostCents: optionalMoney,
+  buyer: z.string().max(200).optional(),
+  orderUrl: z.string().url().nullable().optional(),
+  notes: z.string().max(2000).optional(),
 });

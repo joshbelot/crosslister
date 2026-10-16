@@ -15,6 +15,13 @@
       "when": 1792125026506,
       "tag": "0001_legal_natasha_romanoff",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792125381502,
+      "tag": "0002_early_thunderbolt",
+      "breakpoints": true
     }
   ]
 }

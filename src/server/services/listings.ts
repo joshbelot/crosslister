@@ -1,3 +1,4 @@
+import { latestSaleForListing } from './salesLedger';
 import fs from 'node:fs';
 import { and, asc, eq, lt } from 'drizzle-orm';
 import {
@@ -107,6 +108,7 @@ export function getListing(db: Db, id: string): ListingDetail {
     marketplaces: mls,
     activeJobs,
     needsAttention: computeNeedsAttention(listing, mls, allJobs),
+    sale: row.soldAt ? latestSaleForListing(db, id) : null,
   };
 }
 

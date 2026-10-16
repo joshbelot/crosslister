@@ -98,6 +98,7 @@ export interface ListingDetail extends Listing {
   marketplaces: MarketplaceListing[];
   activeJobs: Job[];             // non-terminal jobs for the listing
   needsAttention: boolean;
+  sale: Sale | null;             // the newest sale row of a sold listing
 }
 
 export interface ListingSummary {
@@ -242,3 +243,14 @@ export type AppEvent =
   | { type: 'import.updated'; batchId: string }
   | { type: 'sale.detected'; listingId: string; marketplaceId: MarketplaceId }
   | { type: 'log'; entry: LogEntry };
+
+export interface Sale {
+  id: string; listingId: string | null; marketplaceId: MarketplaceId | 'elsewhere'; soldAt: string;
+  title: string; sku: string; thumbUrl: string | null;
+  salePriceCents: number | null; shippingChargedCents: number | null; marketplaceFeesCents: number | null;
+  shippingCostCents: number | null; otherCostsCents: number | null; itemCostCents: number | null;
+  netCents: number | null;   // sale + shipping charged − fees − shipping cost − other costs − item cost; null when salePriceCents is null
+  buyer: string; orderUrl: string | null; notes: string; source: 'manual' | 'detected' | 'ebay_api';
+  createdAt: string; updatedAt: string;
+}
+export interface SalesTotals { count: number; revenueCents: number; feesCents: number; netCents: number }

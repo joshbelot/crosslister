@@ -173,3 +173,24 @@ export type MarketplaceListingRow = typeof marketplaceListings.$inferSelect;
 export type JobRow = typeof jobs.$inferSelect;
 export type JobStepRow = typeof jobSteps.$inferSelect;
 export type LogRow = typeof logs.$inferSelect;
+
+export const sales = sqliteTable('sales', {
+  id: text('id').primaryKey(),
+  listingId: text('listing_id').references(() => listings.id, { onDelete: 'set null' }),
+  marketplaceId: text('marketplace_id').notNull(),               // a MarketplaceId or 'elsewhere'
+  soldAt: text('sold_at').notNull(),
+  title: text('title').notNull(),                                 // copied from the listing at sale time
+  sku: text('sku').notNull(),
+  salePriceCents: integer('sale_price_cents'),
+  shippingChargedCents: integer('shipping_charged_cents'),        // what the buyer paid for shipping
+  marketplaceFeesCents: integer('marketplace_fees_cents'),
+  shippingCostCents: integer('shipping_cost_cents'),              // what you paid for the label
+  otherCostsCents: integer('other_costs_cents'),
+  itemCostCents: integer('item_cost_cents'),                      // copied from listings.cost_cents
+  buyer: text('buyer').notNull().default(''),
+  orderUrl: text('order_url'),
+  notes: text('notes').notNull().default(''),
+  source: text('source').notNull(),                               // 'manual' | 'detected' | 'ebay_api'
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+}, (t) => [index('sales_sold_at_idx').on(t.soldAt), index('sales_listing_idx').on(t.listingId)]);

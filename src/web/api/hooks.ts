@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import type { InventoryFilter, MarketplaceId } from '../../shared/constants';
 import type { ListingPatch, MarketplaceListingPatch } from '../../shared/schemas';
 import type {
-  Job, ListingDetail, ListingSummary, LogEntry, MarketplaceInfo, MarketplaceListing, Photo, Settings, ValidationReport,
+  Job, ListingDetail, ListingSummary, LogEntry, MarketplaceInfo, MarketplaceListing, Photo, Sale, SalesTotals, Settings, ValidationReport,
 } from '../../shared/types';
 import { api, ApiError } from './client';
 
@@ -160,7 +160,7 @@ export const useDeactivateAll = () =>
 
 export const useMarkSold = () =>
   useApiMutation(
-    ({ id, body }: { id: string; body: { marketplaceId: MarketplaceId | 'elsewhere'; soldPriceCents?: number | null; soldAt?: string; deactivateMarketplaceIds: MarketplaceId[] } }) =>
+    ({ id, body }: { id: string; body: { marketplaceId: MarketplaceId | 'elsewhere'; soldPriceCents?: number | null; soldAt?: string; deactivateMarketplaceIds: MarketplaceId[]; shippingChargedCents?: number | null; marketplaceFeesCents?: number | null; shippingCostCents?: number | null; otherCostsCents?: number | null; buyer?: string; orderUrl?: string | null; notes?: string } }) =>
       api.post<{ listing: ListingDetail; jobs: Job[] }>(`/api/listings/${id}/mark-sold`, body),
     (qc, a) => refreshListing(qc, a.id),
   );
@@ -219,4 +219,20 @@ export const usePriceChange = () =>
     ({ id, body }: { id: string; body: { priceCents: number; marketplaceIds: MarketplaceId[]; clearOverrides: boolean } }) =>
       api.post<{ listing: ListingDetail; jobs: Job[]; skipped: Array<{ marketplaceId: MarketplaceId; reason: string }> }>(`/api/listings/${id}/price-change`, body),
     (qc, a) => refreshListing(qc, a.id),
+  );
+
+export interface SalesFilters { from?: string; to?: string; marketplaceId?: string; q?: string }
+export const salesQuery = (f: SalesFilters) => qs({ from: f.from, to: f.to, marketplaceId: f.marketplaceId, q: f.q });
+
+export const useSales = (f: SalesFilters) =>
+  useQuery({
+    queryKey: ['sales', f],
+    queryFn: () => api.get<{ items: Sale[]; totals: SalesTotals }>(`/api/sales${salesQuery(f)}`),
+    placeholderData: (prev) => prev,
+  });
+
+export const useUpdateSale = () =>
+  useApiMutation(
+    ({ id, body }: { id: string; body: Record<string, unknown> }) => api.patch<Sale>(`/api/sales/${id}`, body),
+    (qc, a, r) => { void qc.invalidateQueries({ queryKey: ['sales'] }); if (r.listingId) void qc.invalidateQueries({ queryKey: ['listing', r.listingId] }); void a; },
   );

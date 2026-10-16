@@ -14,6 +14,7 @@ import {
 } from '../api/hooks';
 import { DeactivateAllModal } from '../components/DeactivateAllModal';
 import { MarkSoldModal } from '../components/MarkSoldModal';
+import { SaleEditModal } from '../components/SaleEditModal';
 import { PriceChangeModal } from '../components/PriceChangeModal';
 import { MarketplaceBadge } from '../components/MarketplaceBadge';
 import { Modal } from '../components/Modal';
@@ -99,6 +100,7 @@ export function ListingDetailPage() {
   const [menu, setMenu] = useState(false);
   const [soldOpen, setSoldOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
+  const [saleEditOpen, setSaleEditOpen] = useState(false);
   const [deactOpen, setDeactOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [lightbox, setLightbox] = useState(false);
@@ -219,6 +221,25 @@ export function ListingDetailPage() {
           {l.notes && <div className="mt-3 rounded-lg bg-amber-50 p-3 text-sm"><span className="pill mb-1 bg-amber-100 text-amber-800">Private</span><p className="whitespace-pre-wrap">{l.notes}</p></div>}
         </section>
       </div>
+
+      {l.soldAt && l.sale && (
+        <section className="card mt-6 p-4" data-testid="sale-card">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-zinc-700">Sale</h2>
+            <button className="btn btn-secondary btn-sm" onClick={() => setSaleEditOpen(true)}>Edit</button>
+          </div>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
+            <Row label="Date">{formatDate(l.sale.soldAt)}</Row>
+            <Row label="Platform">{l.sale.marketplaceId === 'elsewhere' ? 'Elsewhere' : MARKETPLACE_NAMES[l.sale.marketplaceId]}</Row>
+            <Row label="Sale price">{formatCents(l.sale.salePriceCents)}</Row>
+            <Row label="Fees">{formatCents(l.sale.marketplaceFeesCents)}</Row>
+            <Row label="Net">{formatCents(l.sale.netCents)}</Row>
+            <Row label="Buyer">{l.sale.buyer || '—'}</Row>
+            {l.sale.orderUrl && <Row label="Order"><a className="underline" href={l.sale.orderUrl} target="_blank" rel="noreferrer">Open</a></Row>}
+          </dl>
+        </section>
+      )}
+      {saleEditOpen && l.sale && <SaleEditModal sale={l.sale} onClose={() => setSaleEditOpen(false)} />}
 
       <section className="card mt-6 p-4">
         <h2 className="mb-2 text-sm font-semibold text-zinc-700">Description</h2>

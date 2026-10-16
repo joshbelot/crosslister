@@ -9,7 +9,7 @@ import { ActivityDrawer } from './ActivityDrawer';
 import { SaleBanner } from './SaleBanner';
 import { ShortcutHelp } from './ShortcutHelp';
 
-const NAV = [{ to: '/', label: 'Inventory', end: true }, { to: '/import', label: 'Import' }, { to: '/settings', label: 'Settings' }, { to: '/logs', label: 'Logs' }];
+const NAV = [{ to: '/', label: 'Inventory', end: true }, { to: '/sales', label: 'Sold' }, { to: '/import', label: 'Import' }, { to: '/settings', label: 'Settings' }, { to: '/logs', label: 'Logs' }];
 
 export function Layout() {
   const { connected } = useEventStream();

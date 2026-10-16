@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router';
 import { Layout } from './components/Layout';
+import { SalesPage } from './pages/SalesPage';
 import { ImportPage } from './pages/ImportPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { ListingDetailPage } from './pages/ListingDetailPage';
@@ -16,6 +17,7 @@ export const router = createBrowserRouter([
       { path: '/listings/new', element: <Navigate to="/listings/new/edit" replace /> },
       { path: '/listings/:id/edit', element: <ListingEditorPage /> },
       { path: '/listings/:id', element: <ListingDetailPage /> },
+      { path: '/sales', element: <SalesPage /> },
       { path: '/import', element: <ImportPage /> },
       { path: '/settings', element: <SettingsPage /> },
       { path: '/logs', element: <LogsPage /> },
