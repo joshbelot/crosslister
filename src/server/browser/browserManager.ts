@@ -279,6 +279,16 @@ export const browserManager = {
     t.unref();
     idleTimers.set(mp, t);
   },
+  /** A tab for background work (status checks) that is not the marketplace's main tab. Attach mode: a new tab, closed with closeTempPage. Launch mode: the marketplace's page. */
+  async openTempPage(mp: MarketplaceId): Promise<Page> {
+    if (browserMode() !== 'attach') return this.getPage(mp);
+    const page = await (await sharedContext()).newPage();
+    return page;
+  },
+  async closeTempPage(page: Page): Promise<void> {
+    if (browserMode() !== 'attach') return;
+    try { await page.close(); } catch { /* already closed */ }
+  },
   /** Attach mode only: delete the cookies of the given sites (host suffixes such as `depop.com`) so the user is logged out there. */
   async clearSiteCookies(hosts: string[]): Promise<void> {
     if (browserMode() !== 'attach' || hosts.length === 0) return;

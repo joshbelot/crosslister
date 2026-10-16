@@ -24,9 +24,9 @@ beforeEach(async () => {
 });
 afterEach(async () => { await jobRunner.idle(); vi.restoreAllMocks(); });
 
-async function setPolling(on: boolean) {
+async function setPolling(on: boolean, autoDelist = true) {
   const s = (await req(t.app, 'GET', '/api/settings')).json();
-  s.statusChecks = { ebayPollingEnabled: on, ebayIntervalMinutes: 30 };
+  s.statusChecks = { ebayPollingEnabled: on, ebayIntervalMinutes: 30, browserPollingEnabled: true, browserIntervalMinutes: 60, autoDelistOnSale: autoDelist };
   await req(t.app, 'PUT', '/api/settings', s);
 }
 async function listActive(n: number) {
@@ -60,18 +60,32 @@ describe('eBay polling', () => {
     expect(m.byKey('trading:GetItem')).toHaveLength(3);
   });
 
-  it('uses a single SoldList call when more than 5 are active and flags only matching items', async () => {
+  const soldListXml = '<?xml version="1.0"?><GetMyeBaySellingResponse xmlns="urn:ebay:apis:eBLBaseComponents"><Ack>Success</Ack><SoldList><OrderTransactionArray><OrderTransaction><Transaction><Item><ItemID>110000000002</ItemID></Item></Transaction></OrderTransaction></OrderTransactionArray></SoldList></GetMyeBaySellingResponse>';
+
+  it('uses a single SoldList call when more than 5 are active and records the sale for matching items only', async () => {
     const ids = await listActive(7);
-    const m = mockEbay({
-      'trading:GetMyeBaySelling': () => '<?xml version="1.0"?><GetMyeBaySellingResponse xmlns="urn:ebay:apis:eBLBaseComponents"><Ack>Success</Ack><SoldList><OrderTransactionArray><OrderTransaction><Transaction><Item><ItemID>110000000002</ItemID></Item></Transaction></OrderTransaction></OrderTransactionArray></SoldList></GetMyeBaySellingResponse>',
-    });
+    const m = mockEbay({ 'trading:GetMyeBaySelling': () => soldListXml });
     const r = await pollEbay(t.db);
     expect(r).toMatchObject({ ran: true, jobs: 0, sold: 1 });
     expect(m.calls).toHaveLength(1);
     expect(String(m.calls[0]!.body)).toContain('<SoldList>');
+    const sold: string[] = [];
+    for (const id of ids) {
+      const d = (await req(t.app, 'GET', `/api/listings/${id}`)).json();
+      if (d.soldAt) { sold.push(d.title); expect(d.sale).toMatchObject({ source: 'ebay_api', marketplaceId: 'ebay' }); }
+    }
+    expect(sold).toEqual(['Item 2']);
+  });
+
+  it('with automatic removal off it only flags the sale (banner), as before', async () => {
+    await setPolling(true, false);
+    const ids = await listActive(7);
+    mockEbay({ 'trading:GetMyeBaySelling': () => soldListXml });
+    await pollEbay(t.db);
     const flagged: string[] = [];
     for (const id of ids) {
       const d = (await req(t.app, 'GET', `/api/listings/${id}`)).json();
+      expect(d.soldAt).toBeNull();
       if (d.saleDetectedMarketplaceId === 'ebay') flagged.push(d.title);
     }
     expect(flagged).toEqual(['Item 2']);

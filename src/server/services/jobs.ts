@@ -67,9 +67,15 @@ export function listJobs(db: Db, q: { listingId?: string; active?: boolean; limi
       gte(jobs.finishedAt, new Date(Date.now() - 10 * 60_000).toISOString()),
     )!);
   }
+  const limit = q.limit ?? 50;
   const rows = db.select().from(jobs).where(conds.length ? and(...conds) : undefined)
-    .orderBy(desc(jobs.createdAt), desc(jobs.id)).limit(q.limit ?? 50).all();
-  return rows.map((r) => loadJob(db, r, true));
+    .orderBy(desc(jobs.createdAt), desc(jobs.id)).limit(q.active ? limit * 3 : limit).all();
+  // Timed sale checks that found nothing are noise in the Activity drawer.
+  const visible = q.active
+    ? rows.filter((r) => !(r.type === 'status_check' && (r.input as { timed?: boolean } | null)?.timed && r.state === 'SUCCESS'
+      && (r.result as { status?: string } | null)?.status !== 'sold'))
+    : rows;
+  return visible.slice(0, limit).map((r) => loadJob(db, r, true));
 }
 
 export function updateJob(db: Db, id: string, patch: Partial<JobRow>): Job {

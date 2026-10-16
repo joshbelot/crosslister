@@ -44,7 +44,10 @@ describe('status checks', () => {
     await jobRunner.runOnce(t.db);
   });
 
-  it('a sold result flags the sale, marks the marketplace row sold, and never marks the listing sold or deactivates others', async () => {
+  it('with automatic removal off, a sold result flags the sale, marks the marketplace row sold, and never marks the listing sold or deactivates others', async () => {
+    const s = (await req(t.app, 'GET', '/api/settings')).json();
+    s.statusChecks.autoDelistOnSale = false;
+    await req(t.app, 'PUT', '/api/settings', s);
     const l = await listedOn(['mercari', 'poshmark']);
     remote = 'sold';
     const seen: string[] = [];

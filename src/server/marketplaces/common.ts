@@ -6,6 +6,7 @@ import { formatCents } from '../../shared/money';
 import { categoryAncestry, lookupByCategory } from '../../shared/taxonomy';
 import type { CopyField, DataFieldDef, MarketplaceListing, NeedsUserRequest } from '../../shared/types';
 import { click, pace } from '../browser/actions';
+import { browserManager } from '../browser/browserManager';
 import { exists, type LocatorSpec } from '../browser/locators';
 import type { Db } from '../db/client';
 import { getConnection, upsertConnection } from '../services/connectionStore';
@@ -497,17 +498,22 @@ export async function runBrowserUpdate<TData>(
 /** Browser status check (08 §3): read the item page without ever logging in; a login wall means `unknown`. */
 export async function browserCheckStatus<T>(ctx: JobContext, adapter: BrowserAdapter<T>, ml: MarketplaceListing): Promise<RemoteStatus> {
   if (!ml.url) return 'unknown';
-  const page = await ctx.page();
-  const resp = await page.goto(ml.url, { waitUntil: 'domcontentloaded' });
-  await ctx.sleep(process.env.CROSSLISTER_IMPORT_DELAY_MS === '0' ? 0 : 2000);
-  if (adapter.auth.loginUrlPattern.test(page.url())) return 'unknown';
-  if (resp && resp.status() === 404) return 'ended';
-  const found = (await extractProduct(page)).availability;
-  if (found) return found;
-  const sold = adapter.soldIndicator ?? { what: 'sold badge', candidates: [{ text: /^sold$/i }] };
-  if (await exists(page, sold, 1000)) return 'sold';
-  const title = await page.title().catch(() => '');
-  const body = (await page.locator('body').innerText({ timeout: 2000 }).catch(() => '')).slice(0, 4000);
-  if (/not found|no longer available|removed/i.test(`${title}\n${body}`)) return 'ended';
-  return 'unknown';
+  const page = await browserManager.openTempPage(adapter.id);
+  ctx.trace?.attach(page);
+  try {
+    const resp = await page.goto(ml.url, { waitUntil: 'domcontentloaded' });
+    await ctx.sleep(process.env.CROSSLISTER_IMPORT_DELAY_MS === '0' ? 0 : 2000);
+    if (adapter.auth.loginUrlPattern.test(page.url())) return 'unknown';
+    if (resp && resp.status() === 404) return 'ended';
+    const found = (await extractProduct(page)).availability;
+    if (found) return found;
+    const sold = adapter.soldIndicator ?? { what: 'sold badge', candidates: [{ text: /^sold$/i }] };
+    if (await exists(page, sold, 1000)) return 'sold';
+    const title = await page.title().catch(() => '');
+    const body = (await page.locator('body').innerText({ timeout: 2000 }).catch(() => '')).slice(0, 4000);
+    if (/not found|no longer available|removed/i.test(`${title}\n${body}`)) return 'ended';
+    return 'unknown';
+  } finally {
+    await browserManager.closeTempPage(page);
+  }
 }

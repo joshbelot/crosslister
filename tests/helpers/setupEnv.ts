@@ -18,3 +18,4 @@ process.env.EBAY_CLIENT_SECRET = 'test-client-secret';
 process.env.EBAY_RUNAME = 'Test-RuName-123';
 
 process.env.CROSSLISTER_BROWSER_MODE = 'launch';
+process.env.CROSSLISTER_SALE_CONFIRM_MS = '0';

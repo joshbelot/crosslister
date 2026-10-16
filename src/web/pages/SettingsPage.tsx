@@ -5,11 +5,12 @@ import { BackupTab } from '../components/settings/BackupTab';
 import { GeneralTab } from '../components/settings/GeneralTab';
 import { MarketplacesTab } from '../components/settings/MarketplacesTab';
 import { useSettingsDraft } from '../components/settings/useSettingsDraft';
+import { SalesTab } from '../components/settings/SalesTab';
 import { EbayTab } from '../components/settings/EbayTab';
 import { AiTab } from '../components/settings/AiTab';
 
 const TABS = [
-  ['general', 'General'], ['marketplaces', 'Marketplaces'], ['ebay', 'eBay'], ['ai', 'AI'], ['backup', 'Backup & Export'], ['about', 'About'],
+  ['general', 'General'], ['marketplaces', 'Marketplaces'], ['sales', 'Sales'], ['ebay', 'eBay'], ['ai', 'AI'], ['backup', 'Backup & Export'], ['about', 'About'],
 ] as const;
 type Tab = (typeof TABS)[number][0];
 
@@ -38,6 +39,7 @@ export function SettingsPage() {
           <>
             {tab === 'general' && <GeneralTab s={s} />}
             {tab === 'marketplaces' && <MarketplacesTab s={s} />}
+            {tab === 'sales' && <SalesTab s={s} />}
             {tab === 'ebay' && <EbayTab s={s} />}
             {tab === 'ai' && <AiTab s={s} />}
             {tab === 'backup' && <BackupTab />}

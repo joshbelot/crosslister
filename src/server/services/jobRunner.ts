@@ -63,7 +63,7 @@ async function executeJob(db: Db, queued: Job): Promise<void> {
   const adapter = mp ? getAdapter(mp) : null;
   const scope = (mp ?? 'JOBS').toUpperCase();
   const lc = { jobId: queued.id, listingId: queued.listingId, marketplaceId: mp };
-  const input = (getJobRow(db, queued.id).input ?? {}) as { previousStatus?: string };
+  const input = (getJobRow(db, queued.id).input ?? {}) as { previousStatus?: string; timed?: boolean };
 
   const job = updateJob(db, queued.id, { state: 'IN_PROGRESS', startedAt: nowIso() });
   logger.info(scope, `Starting ${job.type}`, lc);
@@ -140,7 +140,7 @@ async function executeJob(db: Db, queued: Job): Promise<void> {
       if (job.type === 'publish') updateTarget(db, job, { status: 'error', lastError: e.userMessage, lastErrorCode: e.code });
       else if (job.type === 'deactivate' || job.type === 'update') updateTarget(db, job, { lastError: e.userMessage, lastErrorCode: e.code });
       if (e.code !== 'UNKNOWN') logger.warn(scope, `${job.type} failed: ${e.userMessage}`, lc);
-      notifyUser(`${name} failed`, e.userMessage);
+      if (!(job.type === 'status_check' && input.timed)) notifyUser(`${name} failed`, e.userMessage);
     }
   } finally {
     const final = getJob(db, queued.id);

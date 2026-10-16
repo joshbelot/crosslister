@@ -123,6 +123,9 @@ export const settingsSchema = z.object({
   statusChecks: z.object({
     ebayPollingEnabled: z.boolean(),
     ebayIntervalMinutes: z.number().int().min(15).max(1440),
+    browserPollingEnabled: z.boolean(),
+    browserIntervalMinutes: z.number().int().min(30).max(1440),
+    autoDelistOnSale: z.boolean(),
   }),
   diagnostics: z.object({
     recordTraces: z.boolean(),

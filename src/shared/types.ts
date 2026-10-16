@@ -196,7 +196,7 @@ export interface Settings {
     textModel: string;            // default 'gemma3:4b'
     visionModel: string;          // default 'gemma3:4b'
   };
-  statusChecks: { ebayPollingEnabled: boolean; ebayIntervalMinutes: number };
+  statusChecks: { ebayPollingEnabled: boolean; ebayIntervalMinutes: number; browserPollingEnabled: boolean; browserIntervalMinutes: number; autoDelistOnSale: boolean };
   diagnostics: { recordTraces: boolean; keepTraceDays: number };
 }
 

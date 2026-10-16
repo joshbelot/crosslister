@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
   browser: { channel: 'chrome', slowMoMs: 0, closeIdleMinutes: 20 },
   ebay: { fulfillmentPolicyId: null, paymentPolicyId: null, returnPolicyId: null, postalCode: '', dispatchTimeDays: 1 },
   ai: { enabled: false, provider: 'ollama', baseUrl: 'http://127.0.0.1:11434', textModel: 'gemma3:4b', visionModel: 'gemma3:4b' },
-  statusChecks: { ebayPollingEnabled: false, ebayIntervalMinutes: 30 },
+  statusChecks: { ebayPollingEnabled: false, ebayIntervalMinutes: 30, browserPollingEnabled: true, browserIntervalMinutes: 60, autoDelistOnSale: true },
   diagnostics: { recordTraces: true, keepTraceDays: 30 },
 };
 
